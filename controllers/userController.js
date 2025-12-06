@@ -1,0 +1,155 @@
+
+const jwt = require('jsonwebtoken');
+const User = require('../models/userModel');
+const dotenv = require('dotenv');
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+dotenv.config();
+
+const getUsers = async (req, res) => {
+    try {
+        const users = await User.find();
+        res.status(200).json(users);
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: err.message,
+        });
+    }
+}
+
+const createToken = (user) => {
+    return jwt.sign({user}, process.env.JWTSECRETKEY, { expiresIn: "3d" });
+}
+
+const login = async (req, res) => {
+    try {
+        const { loginEmail, loginPassword } = req.body;
+        const user = await User.findOne({ email: loginEmail });
+        if (!user) {
+            return res.send({
+                status: 404,
+                message: 'User not found',
+            });
+        }
+        bcrypt.compare(loginPassword, user.password, function (err, result) {
+            if (result) {
+                const token = createToken({
+                    id: user._id,
+                    fullName: user.fullName,
+                    email: user.email,
+                    role: user.role,
+                });
+                const oneDay = 24 * 60 * 60 * 1000;
+                res.cookie("token", token, {
+                    httpOnly: true,
+                    sameSite: "lax",
+                    secure: false,
+                    maxAge: oneDay, // 1 day in milliseconds
+                });
+                return res.send({
+                    status: 200,
+                    user,
+                    message: "Login successfully",
+                    token,
+                });
+            } else {
+                return res.send({
+                    status: 401,
+                    message: "Wrong password"
+                });
+            }
+        });
+    } catch (err) {
+        res.send({
+            status: 404,
+            message: 'User not found',
+        });
+    }
+}
+
+const signup = (req, res) => {
+    const { fullName, email, password, role } = req.body;
+    bcrypt.genSalt(saltRounds, function (err, salt) {
+        bcrypt.hash(password, salt, async function (err, hash) {
+            if (err) {
+                return console.log(err);
+            }
+            try {
+                const newUser = new User({ fullName, email, password: hash, role });
+                await newUser.save();
+                res.status(200).send({
+                    status: 200,
+                    newUser,
+                    message: "User has been created successfully"
+                });
+            } catch (err) {
+                if (err.code === 11000) {
+                    return res.status(400).send({
+                        status: 400,
+                        success: false,
+                        message: "Email already exists. Please use another email"
+                    });
+                }
+                res.status(500).json({
+                    success: false,
+                    status: 500,
+                    message: "Internal Server Error",
+                });
+            }
+        });
+    });
+}
+
+async function home(req, res) {
+    const { user } = req.user;
+    console.log(user, "this is line 42");
+    try {
+        if (user.role === 'admin') {
+            location.href = '/public/dashboard/index.html';
+            return res.send({
+                status: 200,
+                message: "Welcome Admin",
+            });
+        }
+        res.send({
+            status: 200,
+            message: "Welcome User",
+        });
+    } catch (err) {
+        res.send({
+            err,
+            status: 500,
+            message: "Sorry! Server is not responding",
+        });
+    }
+}
+
+const checkUserRole = async (req, res) => {
+    const { user } = req.user;
+    console.log(user);
+    if (user.role === 'admin') {
+        return res.send({
+            status: 200,
+            user,
+            message: "Welcome Admin",
+        });
+    } else {
+        res.send({
+            status: 200,
+            user,
+            message: "Welcome User",
+        });
+    }
+}
+
+const logout = (req, res) => {
+    res.clearCookie("jwtToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None"
+    });
+    res.json({ message: "Logged out successfully" });
+};
+
+module.exports = { getUsers, login, signup, home, logout, checkUserRole };

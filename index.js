@@ -1,14 +1,31 @@
-const express = require("express");
-const { GoogleGenAI } = require("@google/genai");
+
+const express = require('express');
 const app = express();
+const connectDB = require('./config/db');
+const { GoogleGenAI } = require("@google/genai");
+const userRoutes = require('./routes/userRoutes');
+const path = require('path');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
 require("dotenv").config();
+
+const PORT = process.env.PORT || 3000;
+
 app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }))
+// app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors({
+    origin: ["http://localhost:3000", "http://127.0.0.1:5501"],
+    credentials: true,
+}));
+
+// connect to database
+connectDB();
+
+app.use('/api', userRoutes);
 
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
-
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
 
 app.post("/ask-ai", async (req, res) => {
     try {
@@ -38,7 +55,20 @@ app.post("/ask-ai", async (req, res) => {
     }
 });
 
-// Start Server
-app.listen(3000, () => {
+async function main() {
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: "what is javascript",
+    });
+    console.log(response.text);
+}
+
+async function call() {
+    await main();
+}
+
+// call();
+
+app.listen(PORT, () => {
     console.log("Server running on port 3000")
 });
