@@ -1,0 +1,36 @@
+/* Resume Analyzer Specific Styles */
+.resume-input:focus {
+    border-color: #1E88E5;
+    box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+}
+
+.score-card {
+    transition: all 0.3s ease;
+}
+
+.score-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.suggestion-item {
+    transition: all 0.2s ease;
+}
+
+.suggestion-item:hover {
+    background-color: rgba(67, 160, 71, 0.05);
+    padding-left: 0.5rem;
+    border-radius: 0.375rem;
+}
+
+.grammar-highlight {
+    background-color: rgba(67, 160, 71, 0.1);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.line-through {
+    text-decoration: line-through;
+    color: #546E7A;
+    opacity: 0.7;
+}

@@ -1,10 +1,9 @@
 
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
-const dotenv = require('dotenv');
 const bcrypt = require("bcrypt");
+require("dotenv").config();
 const saltRounds = 10;
-dotenv.config();
 
 const getUsers = async (req, res) => {
     try {
@@ -36,9 +35,8 @@ const login = async (req, res) => {
             if (result) {
                 const token = createToken({
                     id: user._id,
-                    fullName: user.fullName,
+                    name: user.name,
                     email: user.email,
-                    role: user.role,
                 });
                 const oneDay = 24 * 60 * 60 * 1000;
                 res.cookie("token", token, {
@@ -49,7 +47,6 @@ const login = async (req, res) => {
                 });
                 return res.send({
                     status: 200,
-                    user,
                     message: "Login successfully",
                     token,
                 });
@@ -69,14 +66,14 @@ const login = async (req, res) => {
 }
 
 const signup = (req, res) => {
-    const { fullName, email, password, role } = req.body;
+    const { name, email, password } = req.body;
     bcrypt.genSalt(saltRounds, function (err, salt) {
         bcrypt.hash(password, salt, async function (err, hash) {
             if (err) {
                 return console.log(err);
             }
             try {
-                const newUser = new User({ fullName, email, password: hash, role });
+                const newUser = new User({ name, email, password: hash });
                 await newUser.save();
                 res.status(200).send({
                     status: 200,
@@ -152,4 +149,4 @@ const logout = (req, res) => {
     res.json({ message: "Logged out successfully" });
 };
 
-module.exports = { getUsers, login, signup, home, logout, checkUserRole };
+module.exports = { getUsers, login, signup, logout };
