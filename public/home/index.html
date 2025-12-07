@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume Analyzer - AI-Powered Resume Analysis</title>
+    <title>CareerAI - Resume Analyzer & Job Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -16,396 +18,303 @@
             --card: #FFFFFF;
             --border: #E0E6EC;
         }
-        
-        * {
-            color: var(--dark-text);
-        }
-
-        body {
-            background-color: var(--light-bg);
-        }
-
-        .navbar {
-            background-color: var(--card);
-            border-bottom: 1px solid var(--border);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .logo {
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background-color: #1565c0;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
-        }
-
-        .btn-secondary {
-            background-color: var(--accent);
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .btn-secondary:hover {
-            background-color: #388e41;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3);
-        }
-
-        .card {
-            background-color: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        textarea {
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--dark-text);
-            background-color: var(--card);
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
-        }
-
-        .score-badge {
-            background: linear-gradient(135deg, var(--primary) 0%, #1565c0 100%);
-            color: white;
-            font-weight: 700;
-        }
-
-        .score-label {
-            color: var(--secondary);
-            font-size: 0.875rem;
-        }
-
-        .suggestion-item {
-            border-left: 3px solid var(--primary);
-            background-color: rgba(30, 136, 229, 0.05);
-        }
-
-        .grammar-section {
-            border-left: 3px solid var(--accent);
-            background-color: rgba(67, 160, 71, 0.05);
-        }
-
-        .ats-score {
-            background: linear-gradient(135deg, var(--accent) 0%, #388e41 100%);
-            color: white;
-        }
-
-        .results-hidden {
-            display: none;
-        }
-
-        .results-visible {
-            animation: fadeIn 0.5s ease-in;
-        }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .textarea-placeholder::placeholder {
-            color: #999;
-        }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .hidden-section { display: none; }
+        .visible-section { display: block; }
     </style>
 </head>
-<body class="bg-light-bg">
+<body style="background-color: var(--light-bg);">
     <!-- Navbar -->
-    <nav class="navbar sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <i class="fas fa-file-alt text-2xl" style="color: var(--primary);"></i>
-                <span class="logo">ResumeAnalyzer</span>
+    <nav class="sticky top-0 z-50 bg-white border-b" style="border-color: var(--border);">
+        <div class="max-w-7xl mx-auto px-6 md:px-8 py-4">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: var(--primary);">
+                        <i class="fas fa-file-pdf text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-xl font-bold" style="color: var(--dark-text);">CareerAI</h1>
+                </div>
+                <button onclick="logout()" class="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-all" style="background-color: var(--primary);">
+                    <i class="fas fa-sign-out-alt me-1"></i>
+                    <span class="hidden sm:inline">Logout</span>
+                    <!-- <span id="historyCount" class="ml-2 px-2 py-1 rounded-full text-sm font-semibold" style="background-color: var(--accent); display: none;">0</span> -->
+                </button>
             </div>
-            <div class="flex items-center gap-6">
-                <a href="#" class="text-sm hover:underline" style="color: var(--secondary);">How it Works</a>
-                <a href="#" class="text-sm hover:underline" style="color: var(--secondary);">About</a>
-                <button class="btn-primary px-6 py-2 rounded-lg text-sm font-medium">
-                    Sign In
+
+            <!-- Tab Navigation -->
+            <div class="flex gap-2 border-b" style="border-color: var(--border);">
+                <button onclick="switchTab('analyzer')" id="analyzerTab" class="px-4 py-3 font-medium transition-colors border-b-2" style="border-color: var(--primary); color: var(--primary);">
+                    <i class="fas fa-file-alt mr-2"></i>Resume Analyzer
+                </button>
+                <button onclick="switchTab('tracker')" id="trackerTab" class="px-4 py-3 font-medium transition-colors border-b-2 border-transparent" style="color: var(--secondary);">
+                    <i class="fas fa-briefcase mr-2"></i>Job Tracker
+                    <span id="jobCount" class="ml-2 text-xs px-2 py-1 rounded-full text-white font-semibold" style="background-color: var(--accent); display: none;">0</span>
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-4 py-12">
-        <!-- Header Section -->
-        <div class="mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">
-                <span style="color: var(--primary);">Optimize</span> Your Resume with AI
-            </h1>
-            <p class="text-lg" style="color: var(--secondary);">
-                Get instant insights on your resume including score, suggestions, grammar fixes, and ATS compatibility
-            </p>
-        </div>
+    <div class="flex">
+        <!-- Main Content -->
+        <div class="flex-1 p-6 md:p-8">
+            <div class="max-w-4xl mx-auto">
+                <!-- Resume Analyzer Tab -->
+                <div id="analyzerSection" class="visible-section">
+                    <div class="mb-8">
+                        <h1 class="text-4xl font-bold mb-2" style="color: var(--dark-text);">Resume Analyzer</h1>
+                        <p style="color: var(--secondary);">Upload your resume and get instant AI-powered feedback</p>
+                    </div>
 
-        <!-- Main Input Section -->
-        <div class="grid md:grid-cols-3 gap-8 mb-12">
-            <!-- Input Card -->
-            <div class="md:col-span-2">
-                <div class="card p-8">
-                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                        <i class="fas fa-paste" style="color: var(--primary);"></i>
-                        Paste Your Resume
-                    </h2>
-                    <textarea 
-                        id="resumeInput"
-                        class="textarea-placeholder w-full h-80 p-4 border-2 resize-none"
-                        placeholder="Paste your resume text here... Include all your experience, education, skills, and achievements."
-                    ></textarea>
-                    <div class="mt-6 flex gap-4">
-                        <button 
-                            onclick="analyzeResume()"
-                            class="btn-primary px-8 py-3 rounded-lg font-medium flex items-center gap-2 transition-all"
-                        >
-                            <i class="fas fa-magic"></i>
-                            Analyze Resume
+                    <!-- Resume Form -->
+                    <form onsubmit="analyzeResume(event)" class="bg-white rounded-lg border p-6 md:p-8 mb-8" style="border-color: var(--border);">
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-2" style="color: var(--dark-text);">Paste Your Resume</label>
+                            <textarea id="resumeInput" placeholder="Paste your resume content here (plain text)..." class="w-full h-64 p-4 border rounded-lg resize-none focus:outline-none" style="border-color: var(--border); color: var(--dark-text); background-color: var(--card);" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 3px rgba(30, 136, 229, 0.1)';" onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';"></textarea>
+                        </div>
+
+                        <div id="errorMsg" class="mb-4 p-3 rounded-lg flex items-center gap-2 hidden" style="background-color: #ffebee; border: 1px solid #ffcdd2;">
+                            <i class="fas fa-exclamation-circle" style="color: #c62828;"></i>
+                            <span id="errorText" style="color: #c62828; font-size: 0.875rem;"></span>
+                        </div>
+
+                        <button type="submit" id="analyzeBtn" class="w-full text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2" style="background-color: var(--primary);">
+                            <i class="fas fa-magic"></i>Analyze Resume
                         </button>
-                        <button 
-                            onclick="clearInput()"
-                            class="px-8 py-3 rounded-lg font-medium border-2 transition-all"
-                            style="border-color: var(--border); color: var(--secondary);"
-                        >
-                            <i class="fas fa-redo"></i>
-                            Clear
-                        </button>
+                    </form>
+
+                    <!-- Results Section -->
+                    <div id="resultsSection" class="hidden-section">
+                        <!-- Score Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 fade-in">
+                            <!-- Overall Score -->
+                            <div class="bg-white rounded-lg border p-6" style="border-color: var(--border);">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-semibold" style="color: var(--dark-text);">Overall Score</h3>
+                                    <i class="fas fa-star text-2xl" style="color: var(--accent);"></i>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="relative w-20 h-20">
+                                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                            <circle cx="50" cy="50" r="45" stroke="var(--border)" stroke-width="8" fill="none"/>
+                                            <circle id="overallCircle" cx="50" cy="50" r="45" stroke="var(--primary)" stroke-width="8" fill="none" stroke-dasharray="283 283" stroke-linecap="round"/>
+                                        </svg>
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <span id="scoreValue" class="text-2xl font-bold" style="color: var(--dark-text);">82</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm mb-2" style="color: var(--secondary);">Performance</p>
+                                        <span id="scoreStatus" class="inline-block text-xs font-semibold px-3 py-1 rounded-full text-white" style="background-color: var(--accent);"><i class="fas fa-check-circle mr-1"></i>Excellent</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ATS Score -->
+                            <div class="bg-white rounded-lg border p-6" style="border-color: var(--border);">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-semibold" style="color: var(--dark-text);">ATS Compatibility</h3>
+                                    <i class="fas fa-robot text-2xl" style="color: var(--accent);"></i>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="relative w-20 h-20">
+                                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                            <circle cx="50" cy="50" r="45" stroke="var(--border)" stroke-width="8" fill="none"/>
+                                            <circle id="atsCircle" cx="50" cy="50" r="45" stroke="var(--accent)" stroke-width="8" fill="none" stroke-dasharray="283 283" stroke-linecap="round"/>
+                                        </svg>
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <span id="atsScoreValue" class="text-2xl font-bold" style="color: var(--dark-text);">75</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm mb-2" style="color: var(--secondary);">ATS Pass Rate</p>
+                                        <span id="atsStatus" class="inline-block text-xs font-semibold px-3 py-1 rounded-full text-white" style="background-color: var(--accent);"><i class="fas fa-thumbs-up mr-1"></i>Optimized</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Suggestions -->
+                        <div class="bg-white rounded-lg border p-6 mb-8 fade-in" style="border-color: var(--border);">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2" style="color: var(--dark-text);">
+                                <i class="fas fa-lightbulb" style="color: var(--primary);"></i>Suggestions for Improvement
+                            </h3>
+                            <ul id="suggestionsContainer" class="space-y-3"></ul>
+                        </div>
+
+                        <!-- Grammar Fixes -->
+                        <div class="bg-white rounded-lg border p-6 fade-in" style="border-color: var(--border);">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2" style="color: var(--dark-text);">
+                                <i class="fas fa-spell-check" style="color: var(--accent);"></i>Professional Summary Fix
+                            </h3>
+                            <p class="text-sm mb-3" style="color: var(--secondary);">Here's an improved version of your professional summary:</p>
+                            <div id="grammarContainer" class="rounded-lg p-4 italic" style="background-color: var(--light-bg); border: 1px solid var(--border); color: var(--dark-text);"></div>
+                        </div>
+
+                        <div class="text-center text-sm mt-4" style="color: var(--secondary);">
+                            <i class="fas fa-info-circle mr-2"></i><span id="analysisTime"></span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Info Card -->
-            <div class="md:col-span-1">
-                <div class="card p-6">
-                    <h3 class="font-bold text-lg mb-4">What We Analyze</h3>
-                    <ul class="space-y-3">
-                        <li class="flex items-start gap-3">
-                            <i class="fas fa-check-circle mt-1" style="color: var(--accent);"></i>
-                            <span class="text-sm">Overall Resume Score</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <i class="fas fa-check-circle mt-1" style="color: var(--accent);"></i>
-                            <span class="text-sm">Actionable Suggestions</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <i class="fas fa-check-circle mt-1" style="color: var(--accent);"></i>
-                            <span class="text-sm">Grammar & Spelling</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <i class="fas fa-check-circle mt-1" style="color: var(--accent);"></i>
-                            <span class="text-sm">ATS Score</span>
-                        </li>
-                    </ul>
+                <!-- Job Tracker Tab -->
+                <div id="trackerSection" class="hidden-section">
+                    <div class="mb-8">
+                        <h1 class="text-4xl font-bold mb-2" style="color: var(--dark-text);">Job Tracker</h1>
+                        <p style="color: var(--secondary);">Track your job applications and interview progress</p>
+                    </div>
+
+                    <!-- Add Job Button -->
+                    <button onclick="toggleJobForm()" class="text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center gap-2 mb-8" style="background-color: var(--primary);">
+                        <i class="fas fa-plus"></i>Add Job Application
+                    </button>
+
+                    <!-- Job Form -->
+                    <form id="jobForm" onsubmit="addJob(event)" class="bg-white rounded-lg border p-6 mb-8 hidden" style="border-color: var(--border);">
+                        <h3 class="text-lg font-semibold mb-4" style="color: var(--dark-text);">Add New Job Application</h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2" style="color: var(--dark-text);">Company Name *</label>
+                                <input type="text" id="jobCompany" placeholder="e.g., Google" class="w-full px-4 py-2 border rounded-lg focus:outline-none" style="border-color: var(--border);" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" style="color: var(--dark-text);">Position *</label>
+                                <input type="text" id="jobPosition" placeholder="e.g., Senior React Developer" class="w-full px-4 py-2 border rounded-lg focus:outline-none" style="border-color: var(--border);" required>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2" style="color: var(--dark-text);">Status</label>
+                                <select id="jobStatus" class="w-full px-4 py-2 border rounded-lg focus:outline-none" style="border-color: var(--border);">
+                                    <option value="applied">Applied</option>
+                                    <option value="interviewing">Interviewing</option>
+                                    <option value="offered">Offered</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" style="color: var(--dark-text);">Job Link</label>
+                                <input type="url" id="jobLink" placeholder="https://..." class="w-full px-4 py-2 border rounded-lg focus:outline-none" style="border-color: var(--border);">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2" style="color: var(--dark-text);">Notes</label>
+                            <textarea id="jobNotes" placeholder="Add any notes about this application..." class="w-full px-4 py-2 border rounded-lg focus:outline-none resize-none h-24" style="border-color: var(--border);"></textarea>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button type="submit" class="flex-1 text-white font-semibold py-2 px-4 rounded-lg transition-all" style="background-color: var(--primary);">Add Job</button>
+                            <button type="button" onclick="toggleJobForm()" class="flex-1 font-semibold py-2 px-4 rounded-lg transition-all border" style="border-color: var(--border); color: var(--secondary);">Cancel</button>
+                        </div>
+                    </form>
+
+                    <!-- Filter Buttons -->
+                    <div class="flex gap-2 flex-wrap mb-8">
+                        <button onclick="filterJobs('all')" class="filterBtn active px-4 py-2 rounded-lg font-medium transition-colors text-white" data-filter="all" style="background-color: var(--primary);">All</button>
+                        <button onclick="filterJobs('applied')" class="filterBtn px-4 py-2 rounded-lg font-medium transition-colors border" data-filter="applied" style="border-color: var(--border); color: var(--secondary);">Applied</button>
+                        <button onclick="filterJobs('interviewing')" class="filterBtn px-4 py-2 rounded-lg font-medium transition-colors border" data-filter="interviewing" style="border-color: var(--border); color: var(--secondary);">Interviewing</button>
+                        <button onclick="filterJobs('offered')" class="filterBtn px-4 py-2 rounded-lg font-medium transition-colors border" data-filter="offered" style="border-color: var(--border); color: var(--secondary);">Offered</button>
+                        <button onclick="filterJobs('rejected')" class="filterBtn px-4 py-2 rounded-lg font-medium transition-colors border" data-filter="rejected" style="border-color: var(--border); color: var(--secondary);">Rejected</button>
+                    </div>
+
+                    <!-- Jobs List -->
+                    <div id="jobsList" class="space-y-4"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Results Section -->
-        <div id="resultsSection" class="results-hidden">
-            <!-- Score Overview -->
-            <div class="grid md:grid-cols-4 gap-6 mb-8">
-                <!-- Main Score -->
-                <div class="card p-6 text-center">
-                    <p class="score-label mb-2">Resume Score</p>
-                    <div class="score-badge text-4xl py-6 rounded-lg mb-2 flex items-center justify-center">
-                        <span id="scoreValue">82</span>
+        <!-- History Sidebar -->
+        <div id="historySidebar" class="w-full md:w-80 bg-white border-l hidden md:block" style="border-color: var(--border);">
+            <div class="text-white p-6" style="background-color: var(--primary);">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold">Analysis History</h2>
+                        <p class="text-blue-100 text-sm"><span id="historyTotal">0</span> analyses</p>
                     </div>
-                    <p class="text-sm" style="color: var(--secondary);">out of 100</p>
-                </div>
-
-                <!-- ATS Score -->
-                <div class="card p-6 text-center">
-                    <p class="score-label mb-2">ATS Score</p>
-                    <div class="ats-score text-4xl py-6 rounded-lg mb-2 flex items-center justify-center">
-                        <span id="atsScoreValue">75</span>
-                    </div>
-                    <p class="text-sm" style="color: var(--secondary);">Applicant Tracking</p>
-                </div>
-
-                <!-- Word Count -->
-                <div class="card p-6 text-center">
-                    <p class="score-label mb-2">Word Count</p>
-                    <div class="text-4xl font-bold mb-2">
-                        <span id="wordCount">0</span>
-                    </div>
-                    <p class="text-sm" style="color: var(--secondary);">Total Words</p>
-                </div>
-
-                <!-- Status -->
-                <div class="card p-6 text-center">
-                    <p class="score-label mb-2">Status</p>
-                    <div class="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
-                        <i class="fas fa-check-circle" style="color: var(--accent);"></i>
-                        <span style="color: var(--accent);">Good</span>
-                    </div>
-                    <p class="text-sm" style="color: var(--secondary);">Well Formatted</p>
+                    <button onclick="toggleHistory()" class="md:hidden text-white hover:bg-blue-700 p-2 rounded">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Suggestions Section -->
-            <div class="card p-8 mb-8">
-                <h3 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                    <i class="fas fa-lightbulb" style="color: var(--primary);"></i>
-                    Suggestions for Improvement
-                </h3>
-                <div id="suggestionsContainer" class="space-y-3">
-                    <!-- Suggestions will be populated here -->
+            <div id="historyContent" class="overflow-y-auto p-4 space-y-3" style="max-height: calc(100vh - 200px);">
+                <div class="text-center py-12" style="color: var(--secondary);">
+                    <i class="fas fa-inbox text-4xl mb-3 block opacity-30"></i>
+                    <p class="text-sm">No analyses yet</p>
+                    <p class="text-xs mt-1">Analyze your first resume to see it here</p>
                 </div>
             </div>
 
-            <!-- Grammar Fixes Section -->
-            <div class="card p-8 mb-8">
-                <h3 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                    <i class="fas fa-spell-check" style="color: var(--accent);"></i>
-                    Grammar & Corrections
-                </h3>
-                <div id="grammarContainer" class="grammar-section p-4 rounded-lg">
-                    <!-- Grammar fixes will be populated here -->
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row gap-4 mb-12">
-                <button 
-                    onclick="downloadReport()"
-                    class="btn-primary px-8 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all"
-                >
-                    <i class="fas fa-download"></i>
-                    Download Report
-                </button>
-                <button 
-                    onclick="shareResults()"
-                    class="btn-secondary px-8 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all"
-                >
-                    <i class="fas fa-share-alt"></i>
-                    Share Results
-                </button>
-                <button 
-                    onclick="startOver()"
-                    class="px-8 py-3 rounded-lg font-medium border-2 transition-all"
-                    style="border-color: var(--border); color: var(--secondary);"
-                >
-                    <i class="fas fa-redo"></i>
-                    Analyze Another
+            <div id="historyClearBtn" class="border-t p-4 hidden" style="border-color: var(--border);">
+                <button onclick="clearAllHistory()" class="w-full py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-medium transition-all">
+                    <i class="fas fa-trash-alt mr-2"></i>Clear All History
                 </button>
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- Footer -->
-    <footer class="border-t py-8 mt-16" style="border-color: var(--border); background-color: var(--card);">
-        <div class="max-w-6xl mx-auto px-4 text-center" style="color: var(--secondary);">
-            <p class="mb-4">© 2025 ResumeAnalyzer. Powered by AI Technology.</p>
-            <div class="flex justify-center gap-6">
-                <a href="#" class="hover:text-primary transition-all"><i class="fab fa-twitter"></i></a>
-                <a href="#" class="hover:text-primary transition-all"><i class="fab fa-linkedin"></i></a>
-                <a href="#" class="hover:text-primary transition-all"><i class="fab fa-github"></i></a>
+    <!-- Edit Job Modal -->
+    <div id="editJobModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50" onclick="if(event.target.id === 'editJobModal') closeEditModal()">
+        <div class="bg-white rounded-lg p-6 md:p-8 max-w-md w-full mx-4" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold" style="color: var(--dark-text);">Edit Job Application</h2>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
-        </div>
-    </footer>
 
-    <script>
-        // Mock AI analysis function - replace with actual API call
-        function analyzeResume() {
-            const resumeText = document.getElementById('resumeInput').value;
-            
-            if (!resumeText.trim()) {
-                alert('Please paste your resume text first!');
-                return;
-            }
-
-            // Mock data - replace with actual API response
-            const mockResponse = {
-                score: 82,
-                suggestions: [
-                    "Add measurable achievements and metrics to your experience",
-                    "Rewrite your professional summary to be more compelling",
-                    "Improve grammar in the job experience section",
-                    "Add relevant keywords to match job descriptions",
-                    "Include certifications and professional development"
-                ],
-                grammarFixes: "Your resume has been checked for spelling and grammar. Here are key improvements:\n\n1. Changed 'responsible for managing' to 'led a team managing'\n2. Fixed: 'Increased sales by 25%' (was 'Increase sales')\n3. Corrected: 'Collaborated with cross-functional teams' (was 'collaborate')\n4. Added Oxford commas throughout for better clarity",
-                atsScore: 75,
-                wordCount: resumeText.split(/\s+/).length
-            };
-
-            displayResults(mockResponse);
-        }
-
-        function displayResults(data) {
-            // Update scores
-            document.getElementById('scoreValue').textContent = data.score;
-            document.getElementById('atsScoreValue').textContent = data.atsScore;
-            document.getElementById('wordCount').textContent = data.wordCount;
-
-            // Display suggestions
-            const suggestionsContainer = document.getElementById('suggestionsContainer');
-            suggestionsContainer.innerHTML = data.suggestions.map(suggestion => `
-                <div class="suggestion-item p-4 rounded-lg flex items-start gap-3">
-                    <i class="fas fa-star mt-1" style="color: var(--primary);"></i>
-                    <p>${suggestion}</p>
+            <form id="editJobForm" onsubmit="saveJobEdit(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color: var(--dark-text);">Company Name *</label>
+                    <input type="text" id="editJobCompany" placeholder="e.g., Google" class="w-full px-4 py-2 border rounded-lg focus:outline-none" style="border-color: var(--border);" required>
                 </div>
-            `).join('');
 
-            // Display grammar fixes
-            const grammarContainer = document.getElementById('grammarContainer');
-            grammarContainer.innerHTML = `<p class="whitespace-pre-line leading-relaxed">${data.grammarFixes}</p>`;
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2" style="color: var(--dark-text);">Position *</label>
+                    <input type="text" id="editJobPosition" placeholder="e.g., Senior React Developer" class="w-full px-4 py-2 border rounded-lg focus:outline-none" style="border-color: var(--border);" required>
+                </div>
 
-            // Show results section
-            const resultsSection = document.getElementById('resultsSection');
-            resultsSection.classList.remove('results-hidden');
-            resultsSection.classList.add('results-visible');
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--dark-text);">Status</label>
+                        <select id="editJobStatus" class="w-full px-4 py-2 border rounded-lg focus:outline-none" style="border-color: var(--border);">
+                            <option value="applied">Applied</option>
+                            <option value="interviewing">Interviewing</option>
+                            <option value="offered">Offered</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--dark-text);">Job Link</label>
+                        <input type="url" id="editJobLink" placeholder="https://..." class="w-full px-4 py-2 border rounded-lg focus:outline-none" style="border-color: var(--border);">
+                    </div>
+                </div>
 
-            // Scroll to results
-            setTimeout(() => {
-                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2" style="color: var(--dark-text);">Notes</label>
+                    <textarea id="editJobNotes" placeholder="Add any notes about this application..." class="w-full px-4 py-2 border rounded-lg focus:outline-none resize-none h-24" style="border-color: var(--border);"></textarea>
+                </div>
 
-        function clearInput() {
-            document.getElementById('resumeInput').value = '';
-            document.getElementById('resumeInput').focus();
-        }
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 text-white font-semibold py-2 px-4 rounded-lg transition-all" style="background-color: var(--primary);">Save Changes</button>
+                    <button type="button" onclick="closeEditModal()" class="flex-1 font-semibold py-2 px-4 rounded-lg transition-all border" style="border-color: var(--border); color: var(--secondary);">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        function startOver() {
-            clearInput();
-            document.getElementById('resultsSection').classList.add('results-hidden');
-            document.getElementById('resultsSection').classList.remove('results-visible');
-            document.getElementById('resumeInput').focus();
-        }
-
-        function downloadReport() {
-            alert('Report download feature would be connected to your backend!');
-        }
-
-        function shareResults() {
-            alert('Share feature would open share options for social media and email!');
-        }
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>

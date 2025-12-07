@@ -1,12 +1,11 @@
 
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-dotenv.config();
+require("dotenv").config();
 
 const verifyToken = (req, res, next) => {
     const token = req.cookies?.token; // read token from cookie
     if (!token) {
-        return res.json({
+        return res.status(404).json({
             status: 401,
             message: "No token provided"
         });

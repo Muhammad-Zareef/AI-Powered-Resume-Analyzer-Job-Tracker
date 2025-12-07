@@ -1,4 +1,20 @@
 
+// Initialize
+document.addEventListener("DOMContentLoaded", function () {
+    checkAuth();
+});
+
+async function checkAuth() {
+    try {
+        const res = await axios.get("http://localhost:3000/api/resume/auth", { withCredentials: true });
+        if (res.data.status === 200) {
+            window.location.href = "./home/index.html";
+        }
+    } catch (err) {
+
+    }
+}
+
 // Mobile Menu Toggle
 const mobileMenuBtn = document.getElementById("mobileMenuBtn");
 const mobileMenu = document.getElementById("mobileMenu");
@@ -102,7 +118,7 @@ async function handleLogin(e) {
         console.log(res)
         if (res.data.status === 200) {
             setTimeout(() => {
-                // window.location.href = "dashboard/index.html";
+                window.location.href = "./home/index.html";
             }, 1000);
             alert(res.data.message);
         } else {

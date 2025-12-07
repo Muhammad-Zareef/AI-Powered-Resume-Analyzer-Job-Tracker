@@ -141,7 +141,7 @@ const checkUserRole = async (req, res) => {
 }
 
 const logout = (req, res) => {
-    res.clearCookie("jwtToken", {
+    res.clearCookie("token", {
         httpOnly: true,
         secure: true,
         sameSite: "None"
