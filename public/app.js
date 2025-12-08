@@ -119,10 +119,22 @@ async function handleLogin(e) {
         if (res.data.status === 200) {
             setTimeout(() => {
                 window.location.href = "./home/index.html";
-            }, 1000);
-            alert(res.data.message);
+            }, 1200);
+            Swal.fire({
+                title: res.data.message,
+                text: "You have successfully logged in",
+                icon: "success",
+                showConfirmButton: false,
+                timer: 1500
+            });
         } else {
-            alert("Invalid credentials");
+            Swal.fire({
+                title: "Invalid credentials",
+                text: "The email or password you entered is incorrect",
+                icon: "error",
+                showConfirmButton: false,
+                timer: 1500
+            });
         }
     } catch (error) {
         console.log(error);

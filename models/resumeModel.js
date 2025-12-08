@@ -3,7 +3,7 @@ const { Schema, model } = require('mongoose');
 
 const ResumeSchema = new Schema({
     userId: {
-        type: Number,
+        type: String,
         ref: "User",
         required: true,
     },
