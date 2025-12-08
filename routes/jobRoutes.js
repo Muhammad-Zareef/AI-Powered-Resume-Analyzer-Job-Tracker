@@ -1,15 +1,12 @@
 
 const express = require('express');
 const router = express.Router();
-// const { getUsers, login, signup, logout } = require('../controllers/userController');
-// // const authrization = require('../middlewares/authMiddleware');
-// const verifyToken = require('../middlewares/verifyToken');
+const verifyToken = require('../middlewares/verifyToken');
+const { getJobs, addJob, updateJob, deleteJob } = require('../controllers/jobController');
 
-// router.get('/users', getUsers);
-// router.post('/login', login);
-// router.post('/signup', signup);
-// // router.post('/home', authrization, home);
-// // router.post('/verifyToken', verifyToken, checkUserRole);
-// router.post('/logout', logout);
+router.get('/jobs', verifyToken, getJobs);
+router.post('/jobs', verifyToken, addJob);
+router.put('/jobs/:id', verifyToken, updateJob);
+router.delete('/jobs/:id', verifyToken, deleteJob);
 
 module.exports = router;

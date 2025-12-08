@@ -68,7 +68,7 @@ const analyzeResume = async (req, res) => {
         await newResume.save();
         res.status(200).send({
             status: 200,
-            aiData,
+            newResume,
             message: "Response generated successfully"
         });
     } catch (err) {
@@ -96,4 +96,19 @@ const deleteResume = async (req, res) => {
     }
 }
 
-module.exports = { getResumes, analyzeResume, deleteResume, auth };
+const clearAllHistory = async (req, res) => {
+    try {
+        const { user } = req.user;
+        await Resume.deleteMany({ userId: user.id });
+        res.status(200).json({
+            message: "Resume history has been successfully deleted"
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+}
+
+module.exports = { getResumes, analyzeResume, deleteResume, clearAllHistory, auth };

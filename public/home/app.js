@@ -57,22 +57,17 @@ async function analyzeResume(e) {
     document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-spinner spinner mr-2"></i>Analyzing...';
     try {
         const res = await axios.post('http://localhost:3000/api/resume/analyze', { resumeText });
-        console.log(res);
-        const aiData = res.data.aiData;
-        console.log(aiData);
+        const aiData = res.data.newResume;
         setTimeout(() => {
             const mockResponse = {
                 id: Date.now().toString(),
-                aiScore: aiData.resumeScore,
+                aiScore: aiData.aiScore,
                 atsScore: aiData.atsScore,
                 suggestions: aiData.suggestions,
-                grammarFixes: aiData.correctedVersion,
-                resumePreview: resumeText.substring(0, 150) + "...",
-                timestamp: Date.now(),
+                aiImprovedText: aiData.aiImprovedText,
+                createdAt: aiData.createdAt,
             };
             displayResults(mockResponse);
-            // state.history.unshift(mockResponse);
-            // saveToStorage();
             renderHistory();
             document.getElementById("analyzeBtn").disabled = false;
             document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
@@ -99,7 +94,7 @@ function displayResults(data) {
             `
         ).join("");
     document.getElementById("suggestionsContainer").innerHTML = suggestionsHtml;
-    document.getElementById("grammarContainer").textContent = data.grammarFixes;
+    document.getElementById("grammarContainer").textContent = data.aiImprovedText;
     document.getElementById("analysisTime").textContent = `Analyzed on ${new Date(data.createdAt).toLocaleDateString()}`;
     document.getElementById("resultsSection").classList.remove("hidden-section");
     document.getElementById("resultsSection").classList.add("visible-section");
@@ -241,10 +236,7 @@ function toggleHistory() {
 async function renderHistory() {
     try {
         const res = await axios.get('http://localhost:3000/api/resume/', { withCredentials: true });
-        console.log(res)
         document.getElementById("historyTotal").textContent = res.data.length;
-        // document.getElementById("historyCount").textContent = state.history.length;
-        // document.getElementById("historyCount").style.display = state.history.length > 0 ? "inline-block" : "none";
         const html = res.data.length === 0
                 ? '<div class="text-center py-12" style="color: var(--secondary);"><i class="fas fa-inbox text-4xl mb-3 block opacity-30"></i><p class="text-sm">No analyses yet</p><p class="text-xs mt-1">Analyze your first resume to see it here</p></div>'
                 : res.data.map((item) => `
@@ -254,7 +246,7 @@ async function renderHistory() {
                             <span class="font-semibold text-sm" style="color: var(--dark-text);">Score: ${item.aiScore}/100</span>
                             <span class="text-xs font-semibold px-2 py-1 rounded text-white" style="background-color: ${item.aiScore >= 80 ? "var(--accent)" : "#fbc02d"};">${item.aiScore >= 80 ? "Great" : "Good"}</span>
                         </div>
-                        <p class="text-xs" style="color: var(--secondary);">${item.originalText}</p>
+                        <p class="text-xs" style="color: var(--secondary);">${item.aiImprovedText.substring(0, 150) + "..."}</p>
                         <p class="text-xs mt-2" style="color: var(--secondary);">${new Date(item.createdAt).toLocaleDateString()}</p>
                     </div>
                     <button onclick="deleteHistory('${item._id}')" class="w-full mt-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded font-medium transition-colors">
@@ -263,7 +255,7 @@ async function renderHistory() {
                 </div>
             `).join("");
         document.getElementById("historyContent").innerHTML = html;
-        document.getElementById("historyClearBtn").classList.toggle("hidden", state.history.length === 0);
+        document.getElementById("historyClearBtn").classList.toggle("hidden", res.data.length === 0);
     } catch (err) {
         console.log(err);
     }
@@ -272,11 +264,9 @@ async function renderHistory() {
 async function viewHistory(id) {
     try {
         const res = await axios.get('http://localhost:3000/api/resume/', { withCredentials: true });
-        console.log(res);
         const item = res.data.find((h) => h._id === id);
-        console.log(item);
         if (item) {
-            document.getElementById("resumeInput").value = item.aiImprovedText.replace("...", "");
+            document.getElementById("resumeInput").value = item.originalText;
             displayResults(item);
             switchTab("analyzer");
         }
@@ -286,8 +276,6 @@ async function viewHistory(id) {
 }
 
 function deleteHistory(id) {
-    console.log(id);
-    // state.history = state.history.filter((h) => h.id !== id);
     try {
         Swal.fire({
             title: "Are you sure?",
@@ -299,8 +287,7 @@ function deleteHistory(id) {
             confirmButtonText: "Yes, delete it!"
         }).then(async (result) => {
             if (result.isConfirmed) {
-                const res = await axios.delete(`http://localhost:3000/api/resume/deleteResume/${id}`);
-                console.log(res);
+                await axios.delete(`http://localhost:3000/api/resume/deleteResume/${id}`);
                 Swal.fire({
                     title: "Deleted!",
                     text: "The Resume has been successfully deleted",
@@ -308,8 +295,6 @@ function deleteHistory(id) {
                     showConfirmButton: false,
                     timer: 2000
                 });
-                // getBlogsData();
-                // saveToStorage();
                 renderHistory();
             }
         });
@@ -319,11 +304,30 @@ function deleteHistory(id) {
 }
 
 function clearAllHistory() {
-    if (confirm("Are you sure you want to clear all history?")) {
-        state.history = [];
-        document.getElementById("resultsSection").classList.add("hidden-section");
-        saveToStorage();
-        renderHistory();
+    try {
+        Swal.fire({
+            title: "Clear All History?",
+            text: "All your resume analysis history will be permanently deleted",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!"
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const res = await axios.delete('http://localhost:3000/api/resume/clearAllHistory', { withCredentials: true });
+                Swal.fire({
+                    title: "History Cleared!",
+                    text: "Your resume history has been successfully deleted",
+                    icon: "success",
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+                renderHistory();
+            }
+        });
+    } catch (error) {
+        console.log(error);
     }
 }
 
@@ -331,12 +335,6 @@ function clearAllHistory() {
 async function saveToStorage() {
     localStorage.setItem("resumeAnalyzerHistory", JSON.stringify(state.history));
     localStorage.setItem("jobTrackerData", JSON.stringify(state.jobs));
-    try {
-        // const res = await axios.post('http://localhost:3000/api/postBlog', { title, author, desc, uid });
-        // console.log(res);
-    } catch (err) {
-        console.log(err);
-    }
 }
 
 function loadFromStorage() {

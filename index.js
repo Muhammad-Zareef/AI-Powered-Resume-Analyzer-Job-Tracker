@@ -29,7 +29,7 @@ connectDB();
 
 app.use('/api', userRoutes);
 app.use('/api/resume', resumeRoutes);
-app.use('/api/job', jobRoutes);
+app.use('/api', jobRoutes);
 
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 
