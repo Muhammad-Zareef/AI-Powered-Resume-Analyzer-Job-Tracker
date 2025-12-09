@@ -16,7 +16,8 @@ const auth = async (req, res) => {
 
 const getResumes = async (req, res) => {
     try {
-        const resumes = await Resume.find();
+        const userId = req.user.user.id;
+        const resumes = await Resume.find({ userId }).sort({ createdAt: -1 });
         res.status(200).json(resumes);
     } catch (err) {
         res.status(500).json({

@@ -56,7 +56,6 @@ async function analyzeResume(e) {
         const aiData = res.data.newResume;
         setTimeout(() => {
             const mockResponse = {
-                id: Date.now().toString(),
                 aiScore: aiData.aiScore,
                 atsScore: aiData.atsScore,
                 suggestions: aiData.suggestions,
@@ -69,6 +68,13 @@ async function analyzeResume(e) {
             document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
         }, 5000);
     } catch (err) {
+        Swal.fire({
+            title: "Error",
+            text: "Internal Server Error",
+            icon: "error",
+            showConfirmButton: false,
+            timer: 2000
+        });
         console.log(err);
     }
 }
@@ -129,7 +135,6 @@ async function addJob(e) {
             appliedDate: Date.now(),
         };
         const res = await axios.post('http://localhost:3000/api/jobs', job);
-        console.log(res);
         Swal.fire({
             title: "Job Published!",
             text: "Your Job has been published successfully",
@@ -138,8 +143,8 @@ async function addJob(e) {
             timer: 2000
         });
         document.getElementById("jobForm").reset();
-        toggleJobForm();
         renderJobs();
+        toggleJobForm();
     } catch (error) {
         console.log(error);
     }
@@ -157,8 +162,7 @@ async function deleteJob(id) {
             confirmButtonText: "Yes, delete it!"
         }).then(async (result) => {
             if (result.isConfirmed) {
-                const res = await axios.delete(`http://localhost:3000/api/jobs/${id}`);
-                console.log(res);
+                await axios.delete(`http://localhost:3000/api/jobs/${id}`);
                 Swal.fire({
                     title: "Deleted!",
                     text: "The Job has been successfully deleted",
@@ -171,16 +175,6 @@ async function deleteJob(id) {
         });
     } catch (error) {
         console.log(error);
-    }
-}
-
-function updateJobStatus(id) {
-    const job = state.jobs.find((j) => j.id === id);
-    if (job) {
-        const statuses = ["applied", "interviewing", "offered"];
-        const idx = statuses.indexOf(job.status);
-        job.status = statuses[(idx + 1) % statuses.length];
-        renderJobs();
     }
 }
 
@@ -197,13 +191,11 @@ function filterJobs(status) {
 async function renderJobs() {
     try {
         const res = await axios.get('http://localhost:3000/api/jobs');
-        console.log(res);
         const filtered = state.currentFilter === "all" ? res.data : res.data.filter((j) => j.status === state.currentFilter);
-        console.log(filtered);
         const html = filtered.length === 0 ? '<div class="bg-white rounded-lg border p-12 text-center" style="border-color: var(--border);"><i class="fas fa-briefcase text-4xl mb-4 block" style="color: var(--border);"></i><p class="font-medium" style="color: var(--secondary);">No jobs yet</p><p class="text-sm" style="color: var(--secondary);">Start tracking your applications</p></div>' : filtered.map((job) => getJobCard(job)).join("");
         document.getElementById("jobsList").innerHTML = html;
-        document.getElementById("jobCount").textContent = state.jobs.length;
-        document.getElementById("jobCount").style.display = state.jobs.length > 0 ? "inline-block" : "none";
+        document.getElementById("jobCount").textContent = res.data.length;
+        document.getElementById("jobCount").style.display = res.data.length > 0 ? "inline-block" : "none";
     } catch (error) {
         console.log(error);
     }
@@ -237,7 +229,6 @@ function getJobCard(job) {
                         </div>
                         <div class="flex gap-2">
                             <button onclick="openEditModal('${job._id}', '${job.company}', '${job.position}', '${job.description}', '${job.status}', '${job.link}', '${job.notes}')" class="transition-colors" style="color: var(--primary);" title="Edit"><i class="fas fa-edit"></i></button>
-                            <button onclick="updateJobStatus('${job._id}')" class="transition-colors" style="color: var(--primary);" title="Update Status"><i class="fas fa-arrow-right"></i></button>
                             <button onclick="deleteJob('${job._id}')" class="transition-colors" style="color: #c62828;" title="Delete"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
@@ -279,8 +270,7 @@ async function saveJobEdit(e) {
             });
             return;
         }
-        const res = await axios.put(`http://localhost:3000/api/jobs/${jobId}`, { company, position, description, status, link, notes });
-        console.log(res);
+        await axios.put(`http://localhost:3000/api/jobs/${jobId}`, { company, position, description, status, link, notes });
         Swal.fire({
             title: "Updated Successfully",
             text: "Your changes have been saved",

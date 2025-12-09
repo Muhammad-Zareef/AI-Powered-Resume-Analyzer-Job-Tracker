@@ -4,6 +4,7 @@
   "description": "Using Gemini API",
   "main": "index.js",
   "scripts": {
+    "vercel-build": "echo Build complete",
     "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -34,6 +35,7 @@
     "multer": "^2.0.2",
     "nodemon": "^3.1.11",
     "pdf-parse": "^2.4.5",
-    "pdfjs-dist": "^5.4.449"
+    "pdfjs-dist": "^5.4.449",
+    "serverless-http": "^4.0.0"
   }
 }

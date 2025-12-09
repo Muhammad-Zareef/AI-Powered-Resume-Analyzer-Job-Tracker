@@ -98,48 +98,6 @@ const signup = (req, res) => {
     });
 }
 
-async function home(req, res) {
-    const { user } = req.user;
-    console.log(user, "this is line 42");
-    try {
-        if (user.role === 'admin') {
-            location.href = '/public/dashboard/index.html';
-            return res.send({
-                status: 200,
-                message: "Welcome Admin",
-            });
-        }
-        res.send({
-            status: 200,
-            message: "Welcome User",
-        });
-    } catch (err) {
-        res.send({
-            err,
-            status: 500,
-            message: "Sorry! Server is not responding",
-        });
-    }
-}
-
-const checkUserRole = async (req, res) => {
-    const { user } = req.user;
-    console.log(user);
-    if (user.role === 'admin') {
-        return res.send({
-            status: 200,
-            user,
-            message: "Welcome Admin",
-        });
-    } else {
-        res.send({
-            status: 200,
-            user,
-            message: "Welcome User",
-        });
-    }
-}
-
 const logout = (req, res) => {
     res.clearCookie("token", {
         httpOnly: true,

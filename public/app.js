@@ -40,7 +40,6 @@ function closeAuthModal() {
 function switchForm(form) {
     const loginForm = document.getElementById("loginForm");
     const signupForm = document.getElementById("signupForm");
-
     if (form === "login") {
         loginForm.classList.remove("hidden");
         signupForm.classList.add("hidden");
@@ -115,14 +114,13 @@ async function handleLogin(e) {
     let loginPassword = document.getElementById("loginPassword").value;
     try {
         const res = await axios.post('http://localhost:3000/api/login', { loginEmail, loginPassword }, { withCredentials: true });
-        console.log(res)
         if (res.data.status === 200) {
             setTimeout(() => {
                 window.location.href = "./home/index.html";
             }, 1200);
             Swal.fire({
-                title: res.data.message,
-                text: "You have successfully logged in",
+                title: "Login Successful!",
+                text: "Welcome back! You have successfully logged in",
                 icon: "success",
                 showConfirmButton: false,
                 timer: 1500
@@ -133,7 +131,7 @@ async function handleLogin(e) {
                 text: "The email or password you entered is incorrect",
                 icon: "error",
                 showConfirmButton: false,
-                timer: 1500
+                timer: 2000
             });
         }
     } catch (error) {
@@ -159,12 +157,25 @@ async function handleSignup(e) {
         if (res.data.status == 200) {
         setTimeout(() => {
             showAuthModal('login');
-        }, 1000);
-        alert("Account created successfully");
+        }, 1200);
+        Swal.fire({
+            title: "Signup Successful!",
+            text: "Your account has been created successfully",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 1500
+        });
     } else {
         console.log(res.data.message);
     }
     } catch (err) {
+        Swal.fire({
+            title: "Oops!",
+            text: err.response.data.message,
+            icon: "error",
+            showConfirmButton: false,
+            timer: 2500
+        });
         console.log(err.response.data.message);
     }
 }

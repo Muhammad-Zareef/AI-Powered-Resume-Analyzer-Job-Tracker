@@ -3,7 +3,8 @@ const Job = require('../models/jobModel');
 
 const getJobs = async (req, res) => {
     try {
-        const jobs = await Job.find();
+        const userId = req.user.user.id;
+        const jobs = await Job.find({ userId }).sort({ createdAt: -1 });
         res.status(200).json(jobs);
     } catch (err) {
         res.status(500).json({
@@ -60,31 +61,6 @@ const deleteJob = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Internal Server Error"
-        });
-    }
-}
-
-const home = async (req, res) => {
-    const { user } = req.user;
-    try {
-        if (user.role === 'admin') {
-            // location.href = '/public/dashboard/index.html';
-            return res.send({
-                status: 200,
-                user,
-                message: "Welcome Admin",
-            });
-        }
-        res.send({
-            status: 200,
-            user,
-            message: "Welcome User",
-        });
-    } catch (err) {
-        res.send({
-            err,
-            status: 500,
-            message: "Sorry! Server is not responding",
         });
     }
 }
