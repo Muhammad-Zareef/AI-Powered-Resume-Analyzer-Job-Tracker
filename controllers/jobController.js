@@ -15,8 +15,9 @@ const getJobs = async (req, res) => {
 
 const addJob = async (req, res) => {
     try {
-        const { company, position, jobDescription, status, notes } = req.body;
-        const newJob = new Job({ company, position, jobDescription, status, notes });
+        const userId = req.user.user.id;
+        const { company, position, description, status, link, notes, appliedDate } = req.body;
+        const newJob = new Job({ userId, company, position, description, status, link, notes, appliedDate });
         await newJob.save();
         res.send({
             success: true,

@@ -2,16 +2,12 @@
 // State Management
 let state = {
     currentTab: "analyzer",
-    history: [],
-    jobs: [],
     currentFilter: "all",
-    editingJobId: null, // Add editing job ID to state
 };
 
 // Initialize
 document.addEventListener("DOMContentLoaded", function () {
     checkAuth();
-    loadFromStorage();
     renderHistory();
     renderJobs();
 });
@@ -106,28 +102,76 @@ function toggleJobForm() {
     document.getElementById("jobForm").classList.toggle("hidden");
 }
 
-function addJob(e) {
+async function addJob(e) {
     e.preventDefault();
-    const job = {
-        id: Date.now().toString(),
-        company: document.getElementById("jobCompany").value,
-        position: document.getElementById("jobPosition").value,
-        status: document.getElementById("jobStatus").value,
-        appliedDate: Date.now(),
-        notes: document.getElementById("jobNotes").value,
-        link: document.getElementById("jobLink").value,
-    };
-    state.jobs.unshift(job);
-    document.getElementById("jobForm").reset();
-    toggleJobForm();
-    saveToStorage();
-    renderJobs();
+    const company = document.getElementById("jobCompany").value;
+    const position = document.getElementById("jobPosition").value;
+    const description = document.getElementById("jobDescription").value;
+    const status = document.getElementById("jobStatus").value;
+    const notes = document.getElementById("jobNotes").value;
+    const link = document.getElementById("jobLink").value;
+    try {
+        if (company.trim() == "" || position.trim() == "" || description.trim() == "" || notes.trim() == "") {
+            Swal.fire({
+                icon: "error",
+                title: "Missing Information!",
+                text: "Please fill in all required fields"
+            });
+            return;
+        }
+        const job = {
+            company,
+            position,
+            description,
+            status,
+            link,
+            notes,
+            appliedDate: Date.now(),
+        };
+        const res = await axios.post('http://localhost:3000/api/jobs', job);
+        console.log(res);
+        Swal.fire({
+            title: "Job Published!",
+            text: "Your Job has been published successfully",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 2000
+        });
+        document.getElementById("jobForm").reset();
+        toggleJobForm();
+        renderJobs();
+    } catch (error) {
+        console.log(error);
+    }
 }
 
-function deleteJob(id) {
-    state.jobs = state.jobs.filter((j) => j.id !== id);
-    saveToStorage();
-    renderJobs();
+async function deleteJob(id) {
+    try {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "This Job will be permanently deleted",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!"
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const res = await axios.delete(`http://localhost:3000/api/jobs/${id}`);
+                console.log(res);
+                Swal.fire({
+                    title: "Deleted!",
+                    text: "The Job has been successfully deleted",
+                    icon: "success",
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+                renderJobs();
+            }
+        });
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 function updateJobStatus(id) {
@@ -136,7 +180,6 @@ function updateJobStatus(id) {
         const statuses = ["applied", "interviewing", "offered"];
         const idx = statuses.indexOf(job.status);
         job.status = statuses[(idx + 1) % statuses.length];
-        saveToStorage();
         renderJobs();
     }
 }
@@ -151,12 +194,19 @@ function filterJobs(status) {
     renderJobs();
 }
 
-function renderJobs() {
-    const filtered = state.currentFilter === "all" ? state.jobs : state.jobs.filter((j) => j.status === state.currentFilter);
-    const html = filtered.length === 0 ? '<div class="bg-white rounded-lg border p-12 text-center" style="border-color: var(--border);"><i class="fas fa-briefcase text-4xl mb-4 block" style="color: var(--border);"></i><p class="font-medium" style="color: var(--secondary);">No jobs yet</p><p class="text-sm" style="color: var(--secondary);">Start tracking your applications</p></div>' : filtered.map((job) => getJobCard(job)).join("");
-    document.getElementById("jobsList").innerHTML = html;
-    document.getElementById("jobCount").textContent = state.jobs.length;
-    document.getElementById("jobCount").style.display = state.jobs.length > 0 ? "inline-block" : "none";
+async function renderJobs() {
+    try {
+        const res = await axios.get('http://localhost:3000/api/jobs');
+        console.log(res);
+        const filtered = state.currentFilter === "all" ? res.data : res.data.filter((j) => j.status === state.currentFilter);
+        console.log(filtered);
+        const html = filtered.length === 0 ? '<div class="bg-white rounded-lg border p-12 text-center" style="border-color: var(--border);"><i class="fas fa-briefcase text-4xl mb-4 block" style="color: var(--border);"></i><p class="font-medium" style="color: var(--secondary);">No jobs yet</p><p class="text-sm" style="color: var(--secondary);">Start tracking your applications</p></div>' : filtered.map((job) => getJobCard(job)).join("");
+        document.getElementById("jobsList").innerHTML = html;
+        document.getElementById("jobCount").textContent = state.jobs.length;
+        document.getElementById("jobCount").style.display = state.jobs.length > 0 ? "inline-block" : "none";
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 function getJobCard(job) {
@@ -178,6 +228,7 @@ function getJobCard(job) {
                             <i class="fas ${colors.icon} mr-2"></i>${job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                         </span>
                     </div>
+                    ${job.description ? `<p class="text-sm mb-3 p-3 rounded" style="color: var(--secondary); background-color: var(--light-bg);">${job.description}</p>` : ""}
                     ${job.notes ? `<p class="text-sm mb-3 p-3 rounded" style="color: var(--secondary); background-color: var(--light-bg);">${job.notes}</p>` : ""}
                     <div class="flex items-center justify-between text-sm" style="color: var(--secondary);">
                         <div class="flex items-center gap-4">
@@ -185,46 +236,62 @@ function getJobCard(job) {
                             ${job.link ? `<a href="${job.link}" target="_blank" rel="noopener noreferrer" style="color: var(--primary);" class="hover:underline"><i class="fas fa-external-link-alt mr-1"></i>View Posting</a>` : ""}
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="openEditModal('${job.id}')" class="transition-colors" style="color: var(--primary);" title="Edit"><i class="fas fa-edit"></i></button>
-                            <button onclick="updateJobStatus('${job.id}')" class="transition-colors" style="color: var(--primary);" title="Update Status"><i class="fas fa-arrow-right"></i></button>
-                            <button onclick="deleteJob('${job.id}')" class="transition-colors" style="color: #c62828;" title="Delete"><i class="fas fa-trash"></i></button>
+                            <button onclick="openEditModal('${job._id}', '${job.company}', '${job.position}', '${job.description}', '${job.status}', '${job.link}', '${job.notes}')" class="transition-colors" style="color: var(--primary);" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button onclick="updateJobStatus('${job._id}')" class="transition-colors" style="color: var(--primary);" title="Update Status"><i class="fas fa-arrow-right"></i></button>
+                            <button onclick="deleteJob('${job._id}')" class="transition-colors" style="color: #c62828;" title="Delete"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 </div>
             `;
 }
 
-function openEditModal(jobId) {
-    const job = state.jobs.find((j) => j.id === jobId);
-    if (job) {
-        state.editingJobId = jobId;
-        document.getElementById("editJobCompany").value = job.company;
-        document.getElementById("editJobPosition").value = job.position;
-        document.getElementById("editJobStatus").value = job.status;
-        document.getElementById("editJobLink").value = job.link || "";
-        document.getElementById("editJobNotes").value = job.notes || "";
-        document.getElementById("editJobModal").classList.remove("hidden");
-    }
+function openEditModal(jobId, company, position, description, status, link, notes) {
+    document.getElementById("jobId").value = jobId;
+    document.getElementById("editJobCompany").value = company;
+    document.getElementById("editJobPosition").value = position;
+    document.getElementById("editJobDescription").value = description;
+    document.getElementById("editJobStatus").value = status;
+    document.getElementById("editJobLink").value = link || "";
+    document.getElementById("editJobNotes").value = notes || "";
+    document.getElementById("editJobModal").classList.remove("hidden");
 }
 
 function closeEditModal() {
-    state.editingJobId = null;
     document.getElementById("editJobModal").classList.add("hidden");
     document.getElementById("editJobForm").reset();
 }
 
-function saveJobEdit(e) {
+async function saveJobEdit(e) {
     e.preventDefault();
-    const job = state.jobs.find((j) => j.id === state.editingJobId);
-    if (job) {
-        job.company = document.getElementById("editJobCompany").value;
-        job.position = document.getElementById("editJobPosition").value;
-        job.status = document.getElementById("editJobStatus").value;
-        job.link = document.getElementById("editJobLink").value;
-        job.notes = document.getElementById("editJobNotes").value;
-        saveToStorage();
-        renderJobs();
+    const jobId = document.getElementById("jobId").value;
+    const company = document.getElementById("editJobCompany").value;
+    const position = document.getElementById("editJobPosition").value;
+    const description = document.getElementById("editJobDescription").value;
+    const status = document.getElementById("editJobStatus").value;
+    const link = document.getElementById("editJobLink").value;
+    const notes = document.getElementById("editJobNotes").value;
+    try {
+        if (company.trim() == "" || position.trim() == "" || description.trim() == "" || notes.trim() == "") {
+            Swal.fire({
+                icon: "error",
+                title: "Missing Information!",
+                text: "Please fill in all required fields"
+            });
+            return;
+        }
+        const res = await axios.put(`http://localhost:3000/api/jobs/${jobId}`, { company, position, description, status, link, notes });
+        console.log(res);
+        Swal.fire({
+            title: "Updated Successfully",
+            text: "Your changes have been saved",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 2000
+        });
         closeEditModal();
+        renderJobs();
+    } catch (error) {
+        console.log(error);
     }
 }
 
@@ -329,19 +396,6 @@ function clearAllHistory() {
     } catch (error) {
         console.log(error);
     }
-}
-
-// Storage
-async function saveToStorage() {
-    localStorage.setItem("resumeAnalyzerHistory", JSON.stringify(state.history));
-    localStorage.setItem("jobTrackerData", JSON.stringify(state.jobs));
-}
-
-function loadFromStorage() {
-    const history = localStorage.getItem("resumeAnalyzerHistory");
-    const jobs = localStorage.getItem("jobTrackerData");
-    if (history) state.history = JSON.parse(history);
-    if (jobs) state.jobs = JSON.parse(jobs);
 }
 
 const logout = async () => {

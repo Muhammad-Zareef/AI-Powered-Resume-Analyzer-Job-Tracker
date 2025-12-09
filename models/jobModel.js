@@ -3,7 +3,7 @@ const { Schema, model } = require('mongoose');
 
 const JobSchema = new Schema({
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: "User",
         required: true,
     },
@@ -17,20 +17,27 @@ const JobSchema = new Schema({
         required: true,
         trim: true,
     },
-    jobDescription: {
+    description: {
         type: String,
         required: false,
         trim: true,
     },
     status: {
         type: String,
-        enum: ["Applied", "Interviewing", "Rejected", "Offered"],
-        default: "Applied",
+        required: true,
+    },
+    link: {
+        type: String,
+        required: true,
     },
     notes: {
         type: String,
         default: "",
         trim: true,
+    },
+    appliedDate: {
+        type: Date,
+        default: Date.now,
     },
     createdAt: {
         type: Date,
