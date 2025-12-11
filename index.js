@@ -11,6 +11,8 @@ const path = require('path');
 const cors = require('cors');
 require("dotenv").config();
 
+const PORT = process.env.PORT || 3000;
+
 app.use(fileUpload());
 app.use(express.json());
 app.use(cookieParser());
@@ -28,4 +30,6 @@ app.use('/api', userRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api', jobRoutes);
 
-module.exports = app;
+app.listen(PORT, () => {
+    console.log("Server running");
+});
