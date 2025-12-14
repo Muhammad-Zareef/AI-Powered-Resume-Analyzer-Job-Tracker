@@ -1,4 +1,5 @@
 
+const fs = require('fs');
 const { response, json } = require('express');
 const Resume = require('../models/resumeModel');
 const { GoogleGenAI } = require("@google/genai");
@@ -28,48 +29,65 @@ const getResumes = async (req, res) => {
 }
 
 const analyzeResume = async (req, res) => {
-    const { user } = req.user;
-    const { resumeText } = req.body;
-    const prompt = `
-        You are a resume analysis engine. Analyze the resume text below and RETURN ONLY VALID JSON.
-        Do NOT include explanations, markdown, comments, or extra text.
-        Return JSON in exactly this structure without markdown fences:
+    // const { user } = req.user;
+    if (!req.files || !req.files.resume) {
+        return res.status(400).json({ message: "No PDF uploaded" });
+    }
+    const pdfBuffer = req.files.resume.data;
+    // console.log(pdfBuffer.toString("base64"))
+    // console.log(req.file.buffer.toString("base64"))
+    // const { resumeText } = req.body;
+    // const prompt = `
+    //     You are a resume analysis engine. Analyze the resume text below and RETURN ONLY VALID JSON.
+    //     Do NOT include explanations, markdown, comments, or extra text.
+    //     Return JSON in exactly this structure without markdown fences:
+    //     {
+    //         "resumeScore": number,
+    //         "atsScore": number,
+    //         "suggestions": [ "string", "string", ... ],
+    //         "correctedVersion": "string"
+    //     }
+    //     Rules:
+    //         - "resumeScore" must be between 0–100
+    //         - "atsScore" must be between 0–100
+    //         - "suggestions" must be a list of short, clear bullet-point suggestions
+    //         - "correctedVersion" must be a clean, professionally rewritten version of the resume
+    //         - Do NOT escape newlines manually — the model should return valid JSON automatically
+    //         - Do NOT return anything outside the JSON object
+    //     Resume to analyze:
+    //     """
+    //     ${resumeText}
+    //     """
+    // `;
+    const contents = [
+        { text: "Summarize this document" },
         {
-            "resumeScore": number,
-            "atsScore": number,
-            "suggestions": [ "string", "string", ... ],
-            "correctedVersion": "string"
+            inlineData: {
+                mimeType: 'application/pdf',
+                data: pdfBuffer.toString("base64")
+            }
         }
-        Rules:
-            - "resumeScore" must be between 0–100
-            - "atsScore" must be between 0–100
-            - "suggestions" must be a list of short, clear bullet-point suggestions
-            - "correctedVersion" must be a clean, professionally rewritten version of the resume
-            - Do NOT escape newlines manually — the model should return valid JSON automatically
-            - Do NOT return anything outside the JSON object
-        Resume to analyze:
-        """
-        ${resumeText}
-        """
-    `;
+    ];
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: prompt,
+            contents: contents,
         });
-        const aiData = JSON.parse(response.text);
-        const newResume = new Resume({
-            userId: user.id,
-            originalText: resumeText,
-            aiImprovedText: aiData.correctedVersion,
-            aiScore: aiData.resumeScore,
-            atsScore: aiData.atsScore,
-            suggestions: aiData.suggestions
-        });
-        await newResume.save();
+        console.log(response.text)
+        // const aiData = JSON.parse(response.text);
+        // const newResume = new Resume({
+        //     userId: user.id,
+        //     originalText: resumeText,
+        //     aiImprovedText: aiData.correctedVersion,
+        //     aiScore: aiData.resumeScore,
+        //     atsScore: aiData.atsScore,
+        //     suggestions: aiData.suggestions
+        // });
+        // await newResume.save();
         res.status(200).send({
             status: 200,
-            newResume,
+            res: response.text,
+            // newResume,
             message: "Response generated successfully"
         });
     } catch (err) {

@@ -35,6 +35,14 @@ function switchTab(tab) {
 // Resume Analysis
 async function analyzeResume(e) {
     e.preventDefault();
+    let fileInput = document.getElementById("fileInput");
+    const file = fileInput.files[0];
+    if (!file) {
+        alert("Please select a PDF file");
+        return;
+    }
+    const formData = new FormData();
+    formData.append("resume", file);
     const resumeText = document.getElementById("resumeInput").value.trim();
     const errorMsg = document.getElementById("errorMsg");
     const errorText = document.getElementById("errorText");
@@ -52,7 +60,10 @@ async function analyzeResume(e) {
     document.getElementById("analyzeBtn").disabled = true;
     document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-spinner spinner mr-2"></i>Analyzing...';
     try {
-        const res = await axios.post('http://localhost:3000/api/resume/analyze', { resumeText });
+        const res = await axios.post('http://localhost:3000/api/resume/analyze', { formData, resumeText }, {
+            withCredentials: true
+        });
+        console.log(res);
         const aiData = res.data.newResume;
         setTimeout(() => {
             const mockResponse = {
@@ -387,6 +398,45 @@ function clearAllHistory() {
         console.log(error);
     }
 }
+
+// async function upload(e) {
+//     // e.preventDefault();
+//     let fileInput = document.getElementById("fileInput");
+//     const file = fileInput.files[0];
+//     if (!file) {
+//         alert("Please select a PDF file");
+//         return;
+//     }
+//     const formData = new FormData();
+//     formData.append("resume", file);
+//     console.log("here")
+//     try {
+//         // if (company.trim() == "" || position.trim() == "" || description.trim() == "" || notes.trim() == "") {
+//         //     Swal.fire({
+//         //         icon: "error",
+//         //         title: "Missing Information!",
+//         //         text: "Please fill in all required fields"
+//         //     });
+//         //     return;
+//         // }
+//         const res = await axios.post('http://localhost:3000/api/resume/analyze', formData, {
+//             withCredentials: true
+//         });
+//         console.log(res);
+//         // Swal.fire({
+//         //     title: "Job Published!",
+//         //     text: "Your Job has been published successfully",
+//         //     icon: "success",
+//         //     showConfirmButton: false,
+//         //     timer: 2000
+//         // });
+//         // document.getElementById("jobForm").reset();
+//         // renderJobs();
+//         // toggleJobForm();
+//     } catch (error) {
+//         console.log(error);
+//     }
+// }
 
 const logout = async () => {
     Swal.fire({
