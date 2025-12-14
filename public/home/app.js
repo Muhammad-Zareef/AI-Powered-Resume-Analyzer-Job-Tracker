@@ -32,17 +32,15 @@ function switchTab(tab) {
     document.getElementById("trackerTab").style.color = tab === "tracker" ? "var(--primary)" : "var(--secondary)";
 }
 
+// Resume Analysis
 async function analyzeResume(e) {
     e.preventDefault();
-
     const errorMsg = document.getElementById("errorMsg");
     const errorText = document.getElementById("errorText");
     const fileInput = document.getElementById("fileInput");
     const textarea = document.getElementById("resumeInput");
-
     const file = fileInput.files[0];
     const resumeText = textarea.value.trim();
-
     const hasFile = !!file;
     const hasText = resumeText.length > 0;
 
@@ -99,7 +97,6 @@ async function analyzeResume(e) {
         const res = await axios.post('http://localhost:3000/api/resume/analyze', formData , {
             withCredentials: true
         });
-        console.log(res);
         const aiData = res.data.newResume;
         setTimeout(() => {
             const mockResponse = {
@@ -115,9 +112,9 @@ async function analyzeResume(e) {
             document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
         }, 5000);
     } catch (err) {
-        showError("Internal Server Error");
         document.getElementById("analyzeBtn").disabled = false;
         document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
+        showError("Internal Server Error");
         console.log(err);
     }
 }
@@ -128,83 +125,6 @@ function showError(message) {
     const errorText = document.getElementById("errorText");
     errorText.textContent = message;
     errorMsg.classList.remove("hidden");
-}
-
-// Resume Analysis
-async function analyzeResu(e) {
-    e.preventDefault();
-    const textarea = document.getElementById("resumeInput");
-    let fileInput = document.getElementById("fileInput");
-    const file = fileInput.files[0];
-    const resumeText = textarea.value.trim();
-    const hasFile = !!file;
-    const hasText = resumeText.length > 0;
-    if (!hasFile && !hasText) {
-        showError("Please upload a PDF or paste your resume text");
-        return;
-    }
-    if (hasFile && hasText) {
-        showError("Please use only one option (PDF or text)");
-        return;
-    }
-    if (hasText && resumeText.length < 50) {
-        showError("Resume text must be at least 50 characters");
-        return;
-    }
-    if (hasFile) {
-        const isPdfMime = file.type === "application/pdf";
-        const isPdfExt = file.name.toLowerCase().endsWith(".pdf");
-
-        if (!isPdfMime || !isPdfExt) {
-            showError("Only PDF files are allowed");
-            fileInput.value = "";
-            return;
-        }
-
-        // Optional: file size (5MB)
-        const MAX_SIZE = 5 * 1024 * 1024;
-        if (file.size > MAX_SIZE) {
-            showError("PDF size must be less than 5MB");
-            fileInput.value = "";
-            return;
-        }
-    }
-    errorMsg.classList.add("hidden");
-    const formData = new FormData();
-    if (hasFile) {
-        formData.append("resume", file); // PDF
-    }
-
-    if (hasText) {
-        formData.append("resumeText", resumeText); // TEXT
-    }
-    document.getElementById("analyzeBtn").disabled = true;
-    document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-spinner spinner mr-2"></i>Analyzing...';
-    try {
-        const res = await axios.post('http://localhost:3000/api/resume/analyze', formData , {
-            withCredentials: true
-        });
-        console.log(res);
-        const aiData = res.data.newResume;
-        setTimeout(() => {
-            const mockResponse = {
-                aiScore: aiData.aiScore,
-                atsScore: aiData.atsScore,
-                suggestions: aiData.suggestions,
-                aiImprovedText: aiData.aiImprovedText,
-                createdAt: aiData.createdAt,
-            };
-            displayResults(mockResponse);
-            renderHistory();
-            document.getElementById("analyzeBtn").disabled = false;
-            document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
-        }, 5000);
-    } catch (err) {
-        document.getElementById("analyzeBtn").disabled = false;
-        document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
-        showError("Internal Server Error");
-        console.log(err);
-    }
 }
 
 function displayResults(data) {
@@ -536,10 +456,13 @@ function handleTextareaInput(textarea) {
 }
 
 function handleFileChange(input) {
+    const fileNameEl = document.getElementById("fileName");
     const textarea = document.getElementById("resumeInput");
     if (input.files.length > 0) {
         textarea.disabled = true;
-        showFileName(input);
+        textarea.disabled = true;
+        fileNameEl.textContent = `Selected file: ${input.files[0].name}`;
+        fileNameEl.classList.remove("hidden");
     } else {
         textarea.disabled = false;
         hideFileName();
@@ -550,6 +473,7 @@ function showFileName(input, name) {
     const textarea = document.getElementById("resumeInput");
     const fileNameEl = document.getElementById("fileName");
     if (name) {
+        textarea.value = "";
         textarea.disabled = true;
         fileNameEl.textContent = `Selected file: ${name}`;
         fileNameEl.classList.remove("hidden");
