@@ -32,35 +32,71 @@ function switchTab(tab) {
     document.getElementById("trackerTab").style.color = tab === "tracker" ? "var(--primary)" : "var(--secondary)";
 }
 
-// Resume Analysis
 async function analyzeResume(e) {
     e.preventDefault();
-    let fileInput = document.getElementById("fileInput");
-    const file = fileInput.files[0];
-    if (!file) {
-        alert("Please select a PDF file");
-        return;
-    }
-    const formData = new FormData();
-    formData.append("resume", file);
-    const resumeText = document.getElementById("resumeInput").value.trim();
+
     const errorMsg = document.getElementById("errorMsg");
     const errorText = document.getElementById("errorText");
-    if (!resumeText) {
-        errorText.textContent = "Please paste your resume text";
-        errorMsg.classList.remove("hidden");
+    const fileInput = document.getElementById("fileInput");
+    const textarea = document.getElementById("resumeInput");
+
+    const file = fileInput.files[0];
+    const resumeText = textarea.value.trim();
+
+    const hasFile = !!file;
+    const hasText = resumeText.length > 0;
+
+    // Nothing provided
+    if (!hasFile && !hasText) {
+        showError("Please upload a PDF or paste your resume text");
         return;
     }
-    if (resumeText.length < 50) {
-        errorText.textContent = "Resume text must be at least 50 characters";
-        errorMsg.classList.remove("hidden");
+
+    // Both provided
+    if (hasFile && hasText) {
+        showError("Please use only one option (PDF or text)");
         return;
     }
+
+    // Validate text
+    if (hasText && resumeText.length < 50) {
+        showError("Resume text must be at least 50 characters");
+        return;
+    }
+
+    // Validate PDF
+    if (hasFile) {
+        const isPdfMime = file.type === "application/pdf";
+        const isPdfExt = file.name.toLowerCase().endsWith(".pdf");
+
+        if (!isPdfMime || !isPdfExt) {
+            showError("Only PDF files are allowed");
+            fileInput.value = "";
+            return;
+        }
+
+        // Optional: file size (5MB)
+        const MAX_SIZE = 5 * 1024 * 1024;
+        if (file.size > MAX_SIZE) {
+            showError("PDF size must be less than 5MB");
+            fileInput.value = "";
+            return;
+        }
+    }
+
     errorMsg.classList.add("hidden");
-    document.getElementById("analyzeBtn").disabled = true;
-    document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-spinner spinner mr-2"></i>Analyzing...';
+
+    // Build FormData
+    const formData = new FormData();
+    if (hasFile) formData.append("resume", file);
+    if (hasText) formData.append("resumeText", resumeText);
+
+    // UI loading state
+    const btn = document.getElementById("analyzeBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
     try {
-        const res = await axios.post('http://localhost:3000/api/resume/analyze', { formData, resumeText }, {
+        const res = await axios.post('http://localhost:3000/api/resume/analyze', formData , {
             withCredentials: true
         });
         console.log(res);
@@ -79,13 +115,94 @@ async function analyzeResume(e) {
             document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
         }, 5000);
     } catch (err) {
-        Swal.fire({
-            title: "Error",
-            text: "Internal Server Error",
-            icon: "error",
-            showConfirmButton: false,
-            timer: 2000
+        showError("Internal Server Error");
+        document.getElementById("analyzeBtn").disabled = false;
+        document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
+        console.log(err);
+    }
+}
+
+// Helper
+function showError(message) {
+    const errorMsg = document.getElementById("errorMsg");
+    const errorText = document.getElementById("errorText");
+    errorText.textContent = message;
+    errorMsg.classList.remove("hidden");
+}
+
+// Resume Analysis
+async function analyzeResu(e) {
+    e.preventDefault();
+    const textarea = document.getElementById("resumeInput");
+    let fileInput = document.getElementById("fileInput");
+    const file = fileInput.files[0];
+    const resumeText = textarea.value.trim();
+    const hasFile = !!file;
+    const hasText = resumeText.length > 0;
+    if (!hasFile && !hasText) {
+        showError("Please upload a PDF or paste your resume text");
+        return;
+    }
+    if (hasFile && hasText) {
+        showError("Please use only one option (PDF or text)");
+        return;
+    }
+    if (hasText && resumeText.length < 50) {
+        showError("Resume text must be at least 50 characters");
+        return;
+    }
+    if (hasFile) {
+        const isPdfMime = file.type === "application/pdf";
+        const isPdfExt = file.name.toLowerCase().endsWith(".pdf");
+
+        if (!isPdfMime || !isPdfExt) {
+            showError("Only PDF files are allowed");
+            fileInput.value = "";
+            return;
+        }
+
+        // Optional: file size (5MB)
+        const MAX_SIZE = 5 * 1024 * 1024;
+        if (file.size > MAX_SIZE) {
+            showError("PDF size must be less than 5MB");
+            fileInput.value = "";
+            return;
+        }
+    }
+    errorMsg.classList.add("hidden");
+    const formData = new FormData();
+    if (hasFile) {
+        formData.append("resume", file); // PDF
+    }
+
+    if (hasText) {
+        formData.append("resumeText", resumeText); // TEXT
+    }
+    document.getElementById("analyzeBtn").disabled = true;
+    document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-spinner spinner mr-2"></i>Analyzing...';
+    try {
+        const res = await axios.post('http://localhost:3000/api/resume/analyze', formData , {
+            withCredentials: true
         });
+        console.log(res);
+        const aiData = res.data.newResume;
+        setTimeout(() => {
+            const mockResponse = {
+                aiScore: aiData.aiScore,
+                atsScore: aiData.atsScore,
+                suggestions: aiData.suggestions,
+                aiImprovedText: aiData.aiImprovedText,
+                createdAt: aiData.createdAt,
+            };
+            displayResults(mockResponse);
+            renderHistory();
+            document.getElementById("analyzeBtn").disabled = false;
+            document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
+        }, 5000);
+    } catch (err) {
+        document.getElementById("analyzeBtn").disabled = false;
+        document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
+        showError("Internal Server Error");
         console.log(err);
     }
 }
@@ -334,7 +451,15 @@ async function viewHistory(id) {
         const res = await axios.get('http://localhost:3000/api/resume/', { withCredentials: true });
         const item = res.data.find((h) => h._id === id);
         if (item) {
-            document.getElementById("resumeInput").value = item.originalText;
+            if (item.originalText.length > 50) {
+                document.getElementById("resumeInput").value = item.originalText;
+                const fileInput = document.getElementById("fileInput");
+                fileInput.disabled = true;
+                fileInput.value = "";
+                hideFileName();
+            } else {
+                showFileName("", item.originalText);
+            }
             displayResults(item);
             switchTab("analyzer");
         }
@@ -399,44 +524,46 @@ function clearAllHistory() {
     }
 }
 
-// async function upload(e) {
-//     // e.preventDefault();
-//     let fileInput = document.getElementById("fileInput");
-//     const file = fileInput.files[0];
-//     if (!file) {
-//         alert("Please select a PDF file");
-//         return;
-//     }
-//     const formData = new FormData();
-//     formData.append("resume", file);
-//     console.log("here")
-//     try {
-//         // if (company.trim() == "" || position.trim() == "" || description.trim() == "" || notes.trim() == "") {
-//         //     Swal.fire({
-//         //         icon: "error",
-//         //         title: "Missing Information!",
-//         //         text: "Please fill in all required fields"
-//         //     });
-//         //     return;
-//         // }
-//         const res = await axios.post('http://localhost:3000/api/resume/analyze', formData, {
-//             withCredentials: true
-//         });
-//         console.log(res);
-//         // Swal.fire({
-//         //     title: "Job Published!",
-//         //     text: "Your Job has been published successfully",
-//         //     icon: "success",
-//         //     showConfirmButton: false,
-//         //     timer: 2000
-//         // });
-//         // document.getElementById("jobForm").reset();
-//         // renderJobs();
-//         // toggleJobForm();
-//     } catch (error) {
-//         console.log(error);
-//     }
-// }
+function handleTextareaInput(textarea) {
+    const fileInput = document.getElementById("fileInput");
+    if (textarea.value.trim().length > 0) {
+        fileInput.disabled = true;
+        fileInput.value = ""; // clear file if any
+        hideFileName();
+    } else {
+        fileInput.disabled = false;
+    }
+}
+
+function handleFileChange(input) {
+    const textarea = document.getElementById("resumeInput");
+    if (input.files.length > 0) {
+        textarea.disabled = true;
+        showFileName(input);
+    } else {
+        textarea.disabled = false;
+        hideFileName();
+    }
+}
+
+function showFileName(input, name) {
+    const textarea = document.getElementById("resumeInput");
+    const fileNameEl = document.getElementById("fileName");
+    if (name) {
+        textarea.disabled = true;
+        fileNameEl.textContent = `Selected file: ${name}`;
+        fileNameEl.classList.remove("hidden");
+    } else {
+        textarea.disabled = false;
+        fileNameEl.textContent = `Selected file: ${input.files[0].name? input.files[0].name : name}`;
+        fileNameEl.classList.remove("hidden");
+    }
+}
+
+function hideFileName() {
+    const fileNameEl = document.getElementById("fileName");
+    fileNameEl.classList.add("hidden");
+}
 
 const logout = async () => {
     Swal.fire({

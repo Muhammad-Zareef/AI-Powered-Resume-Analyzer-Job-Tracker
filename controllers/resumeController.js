@@ -29,67 +29,108 @@ const getResumes = async (req, res) => {
 }
 
 const analyzeResume = async (req, res) => {
-    // const { user } = req.user;
-    if (!req.files || !req.files.resume) {
-        return res.status(400).json({ message: "No PDF uploaded" });
-    }
-    const pdfBuffer = req.files.resume.data;
-    // console.log(pdfBuffer.toString("base64"))
-    // console.log(req.file.buffer.toString("base64"))
-    // const { resumeText } = req.body;
-    // const prompt = `
-    //     You are a resume analysis engine. Analyze the resume text below and RETURN ONLY VALID JSON.
-    //     Do NOT include explanations, markdown, comments, or extra text.
-    //     Return JSON in exactly this structure without markdown fences:
-    //     {
-    //         "resumeScore": number,
-    //         "atsScore": number,
-    //         "suggestions": [ "string", "string", ... ],
-    //         "correctedVersion": "string"
-    //     }
-    //     Rules:
-    //         - "resumeScore" must be between 0–100
-    //         - "atsScore" must be between 0–100
-    //         - "suggestions" must be a list of short, clear bullet-point suggestions
-    //         - "correctedVersion" must be a clean, professionally rewritten version of the resume
-    //         - Do NOT escape newlines manually — the model should return valid JSON automatically
-    //         - Do NOT return anything outside the JSON object
-    //     Resume to analyze:
-    //     """
-    //     ${resumeText}
-    //     """
-    // `;
-    const contents = [
-        { text: "Summarize this document" },
-        {
-            inlineData: {
-                mimeType: 'application/pdf',
-                data: pdfBuffer.toString("base64")
-            }
-        }
-    ];
+    const { user } = req.user;
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: contents,
-        });
-        console.log(response.text)
-        // const aiData = JSON.parse(response.text);
-        // const newResume = new Resume({
-        //     userId: user.id,
-        //     originalText: resumeText,
-        //     aiImprovedText: aiData.correctedVersion,
-        //     aiScore: aiData.resumeScore,
-        //     atsScore: aiData.atsScore,
-        //     suggestions: aiData.suggestions
-        // });
-        // await newResume.save();
-        res.status(200).send({
-            status: 200,
-            res: response.text,
-            // newResume,
-            message: "Response generated successfully"
-        });
+        if (req.files && req.files.resume) {
+            console.log("PDF uploaded:", req.files.resume.name);
+            // PDF flow
+            const pdfBuffer = req.files.resume.data;
+            const promptPDF = `
+                You are a resume analysis engine. I am giving you a document to analyze. Analyze the resume content in the document and RETURN ONLY VALID JSON.
+                Do NOT include explanations, markdown, comments, or any extra text.
+        
+                Return JSON in exactly this structure without markdown fences:
+                {
+                    "resumeScore": number,
+                    "atsScore": number,
+                    "suggestions": ["string", "string", ...],
+                    "correctedVersion": "string"
+                }
+        
+                Rules:
+                - "resumeScore" must be a number between 0 and 100.
+                - "atsScore" must be a number between 0 and 100.
+                - "suggestions" must be a list of short, clear, actionable bullet points.
+                - "correctedVersion" must be a clean, professionally rewritten version of the resume.
+                - Do NOT escape newlines manually — valid JSON should handle this automatically.
+                - Do NOT return anything outside the JSON object.
+            `;
+            const contents = [
+                { text: promptPDF },
+                {
+                    inlineData: {
+                        mimeType: 'application/pdf',
+                        data: pdfBuffer.toString("base64")
+                    }
+                }
+            ];
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: contents,
+            });
+            const aiData = JSON.parse(response.text);
+            const newResume = new Resume({
+                userId: user.id,
+                originalText: req.files.resume.name,
+                aiImprovedText: aiData.correctedVersion,
+                aiScore: aiData.resumeScore,
+                atsScore: aiData.atsScore,
+                suggestions: aiData.suggestions
+            });
+            await newResume.save();
+            res.status(200).send({
+                status: 200,
+                newResume,
+                message: "Response generated successfully"
+            });
+        } else if (req.body.resumeText) {
+            console.log("Text received:", req.body.resumeText);
+            // TEXT flow
+            const { resumeText } = req.body;
+            const prompt = `
+                You are a resume analysis engine. Analyze the resume text below and RETURN ONLY VALID JSON.
+                Do NOT include explanations, markdown, comments, or extra text.
+                Return JSON in exactly this structure without markdown fences:
+                {
+                    "resumeScore": number,
+                    "atsScore": number,
+                    "suggestions": [ "string", "string", ... ],
+                    "correctedVersion": "string"
+                }
+                Rules:
+                    - "resumeScore" must be between 0–100
+                    - "atsScore" must be between 0–100
+                    - "suggestions" must be a list of short, clear bullet-point suggestions
+                    - "correctedVersion" must be a clean, professionally rewritten version of the resume
+                    - Do NOT escape newlines manually — the model should return valid JSON automatically
+                    - Do NOT return anything outside the JSON object
+                Resume to analyze:
+                """
+                ${resumeText}
+                """
+            `;
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+            });
+            const aiData = JSON.parse(response.text);
+            const newResume = new Resume({
+                userId: user.id,
+                originalText: resumeText,
+                aiImprovedText: aiData.correctedVersion,
+                aiScore: aiData.resumeScore,
+                atsScore: aiData.atsScore,
+                suggestions: aiData.suggestions
+            });
+            await newResume.save();
+            res.status(200).send({
+                status: 200,
+                newResume,
+                message: "Response generated successfully"
+            });
+        } else {
+            return res.status(400).json({ error: "No resume provided" });
+        }
     } catch (err) {
         res.status(500).json({
             status: 500,
