@@ -51,6 +51,7 @@ const filteredResumes = async (req, res) => {
     if (date) {
         query.createdAt = { $gte: new Date(date) };
     }
+    console.log(query);
     try {
         const resumes = await Resume.find(query).sort({ createdAt: -1 });
         res.json({ success: true, resumes });

@@ -7,6 +7,10 @@ const ResumeSchema = new Schema({
         ref: "User",
         required: true,
     },
+    userName: {
+        type: String,
+        required: true,
+    },
     originalText: {
         type: String,
         required: true,

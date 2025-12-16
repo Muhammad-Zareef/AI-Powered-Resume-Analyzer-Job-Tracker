@@ -97,6 +97,7 @@ async function analyzeResume(e) {
         const res = await axios.post('http://localhost:3000/api/resume/analyze', formData , {
             withCredentials: true
         });
+        console.log(res)
         const aiData = res.data.newResume;
         setTimeout(() => {
             const mockResponse = {

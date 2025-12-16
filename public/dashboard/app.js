@@ -2,66 +2,68 @@
 // MOCK DATA
 // ============================================
 
-const resumes = [
-  {
-    id: 1,
-    user: "John Doe",
-    atsScore: 85,
-    aiScore: 92,
-    improvedText:
-      "Senior Software Engineer with 8+ years of experience in full-stack development, specializing in React, Node.js, and cloud technologies. Proven track record of leading teams and delivering scalable solutions.",
-    suggestions: [
-      "Add more quantifiable achievements",
-      "Include specific technologies used",
-      "Highlight leadership experience",
-    ],
-    createdDate: "2024-01-15",
-  },
-  {
-    id: 2,
-    user: "Jane Smith",
-    atsScore: 72,
-    aiScore: 78,
-    improvedText:
-      "Marketing Manager with expertise in digital marketing, SEO, and content strategy. Increased engagement by 150% through innovative campaigns.",
-    suggestions: ["Add metrics to achievements", "Include certifications", "Expand on campaign results"],
-    createdDate: "2024-01-14",
-  },
-  {
-    id: 3,
-    user: "Bob Johnson",
-    atsScore: 90,
-    aiScore: 88,
-    improvedText:
-      "Data Scientist with strong background in machine learning, Python, and statistical analysis. Published research in top-tier journals.",
-    suggestions: ["Highlight specific ML models used", "Add links to publications", "Include GitHub profile"],
-    createdDate: "2024-01-13",
-  },
-  {
-    id: 4,
-    user: "Alice Williams",
-    atsScore: 68,
-    aiScore: 75,
-    improvedText:
-      "UX Designer passionate about creating intuitive user experiences. Led design for 10+ mobile applications.",
-    suggestions: ["Add portfolio link", "Include design tools expertise", "Quantify user satisfaction improvements"],
-    createdDate: "2024-01-12",
-  },
-  {
-    id: 5,
-    user: "Charlie Brown",
-    atsScore: 95,
-    aiScore: 94,
-    improvedText:
-      "DevOps Engineer with expertise in AWS, Docker, Kubernetes, and CI/CD pipelines. Reduced deployment time by 70%.",
-    suggestions: [
-      "Add cloud certifications",
-      "Include infrastructure as code experience",
-      "Expand on automation achievements",
-    ],
-    createdDate: "2024-01-11",
-  },
-]
+const resumes = [];
+
+// const resumes = [
+//   {
+//     id: 1,
+//     user: "John Doe",
+//     atsScore: 85,
+//     aiScore: 92,
+//     improvedText:
+//       "Senior Software Engineer with 8+ years of experience in full-stack development, specializing in React, Node.js, and cloud technologies. Proven track record of leading teams and delivering scalable solutions.",
+//     suggestions: [
+//       "Add more quantifiable achievements",
+//       "Include specific technologies used",
+//       "Highlight leadership experience",
+//     ],
+//     createdDate: "2024-01-15",
+//   },
+//   {
+//     id: 2,
+//     user: "Jane Smith",
+//     atsScore: 72,
+//     aiScore: 78,
+//     improvedText:
+//       "Marketing Manager with expertise in digital marketing, SEO, and content strategy. Increased engagement by 150% through innovative campaigns.",
+//     suggestions: ["Add metrics to achievements", "Include certifications", "Expand on campaign results"],
+//     createdDate: "2024-01-14",
+//   },
+//   {
+//     id: 3,
+//     user: "Bob Johnson",
+//     atsScore: 90,
+//     aiScore: 88,
+//     improvedText:
+//       "Data Scientist with strong background in machine learning, Python, and statistical analysis. Published research in top-tier journals.",
+//     suggestions: ["Highlight specific ML models used", "Add links to publications", "Include GitHub profile"],
+//     createdDate: "2024-01-13",
+//   },
+//   {
+//     id: 4,
+//     user: "Alice Williams",
+//     atsScore: 68,
+//     aiScore: 75,
+//     improvedText:
+//       "UX Designer passionate about creating intuitive user experiences. Led design for 10+ mobile applications.",
+//     suggestions: ["Add portfolio link", "Include design tools expertise", "Quantify user satisfaction improvements"],
+//     createdDate: "2024-01-12",
+//   },
+//   {
+//     id: 5,
+//     user: "Charlie Brown",
+//     atsScore: 95,
+//     aiScore: 94,
+//     improvedText:
+//       "DevOps Engineer with expertise in AWS, Docker, Kubernetes, and CI/CD pipelines. Reduced deployment time by 70%.",
+//     suggestions: [
+//       "Add cloud certifications",
+//       "Include infrastructure as code experience",
+//       "Expand on automation achievements",
+//     ],
+//     createdDate: "2024-01-11",
+//   },
+// ]
 
 let jobs = [
   {
@@ -226,7 +228,7 @@ function initNavigation() {
   }
 
   navLinks.forEach((link) => {
-    link.addEventListener("click", (e) => {
+    link.addEventListener("click", async (e) => {
       e.preventDefault()
       const targetPage = link.dataset.page
 
@@ -253,7 +255,13 @@ function initNavigation() {
 
       // Load data for the page
       if (targetPage === "resumes") {
-        renderResumeTable()
+        try {
+          const res = await axios.get("http://localhost:3000/admin/getResumes", { withCredentials: true });
+          console.log(res);
+          renderResumeTable(res.data);
+        } catch (err) {
+          console.log(err);
+        }
       } else if (targetPage === "jobs") {
         renderJobTable()
       } else if (targetPage === "users") {
@@ -326,6 +334,7 @@ window.closeModal = closeModal
 // ============================================
 
 function renderResumeTable(resumes) {
+  console.log(resumes)
   const tbody = document.getElementById("resumeTableBody")
   tbody.innerHTML = ""
 
@@ -368,10 +377,10 @@ function renderResumeTable(resumes) {
                 <span class="text-sm font-semibold ${aiColor}">${resume.aiScore}%</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                ${new Date(resume.createdDate).toLocaleDateString()}
+                ${new Date(resume.createdAt).toLocaleDateString()}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button onclick="viewResumeDetails(${resume._id})" class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View Details">
+                <button onclick="viewResumeDetails('${resume._id}')" class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View Details">
                     <i class="fas fa-eye"></i>
                 </button>
             </td>
@@ -381,6 +390,7 @@ function renderResumeTable(resumes) {
 }
 
 function viewResumeDetails(id) {
+  console.log(id)
   const resume = resumes.find((r) => r.id === id)
   if (!resume) return
 
@@ -389,11 +399,11 @@ function viewResumeDetails(id) {
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">User</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${resume.user}</p>
+                    <p class="text-base font-semibold text-gray-900 dark:text-white">${resume.userName}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Created Date</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(resume.createdDate).toLocaleDateString()}</p>
+                    <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(resume.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">ATS Score</p>
@@ -408,7 +418,7 @@ function viewResumeDetails(id) {
             <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">AI Improved Resume Text</p>
                 <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <p class="text-sm text-gray-900 dark:text-white">${resume.improvedText}</p>
+                    <p class="text-sm text-gray-900 dark:text-white">${resume.aiImprovedText}</p>
                 </div>
             </div>
             
@@ -465,23 +475,18 @@ async function initResumeFilters() {
     console.log(ats)
     console.log(ai)
     console.log(date)
-    console.log("Applying resume filters...")
+    console.log("Applying resume filters...");
     try {
-      const query = new URLSearchParams({
-        search,
-        ats,
-        ai,
-        date,
-      }).toString();
-      console.log(query)
+      const query = new URLSearchParams({ search, ats, ai, date }).toString();
+      console.log(query);
       const res = await axios.get(`http://localhost:3000/admin/resumes?${query}`, { withCredentials: true });
       // const data = await res.json();
-      console.log(res)
+      console.log(res);
       // renderResumeTable(data.resumes); // pass backend data
     } catch (error) {
       console.error("Failed to fetch resumes:", error);
     }
-    // renderResumeTable()
+    // renderResumeTable();
   }
 
   searchInput.addEventListener("input", applyFilters)
@@ -968,6 +973,24 @@ function initUserManagement() {
     createUserForm()
   })
 }
+console.log(Date.now())
+async function logout() {
+    // Swal.fire({
+    //     title: "Logged Out!",
+    //     text: "You have been successfully logged out",
+    //     icon: "success",
+    //     showConfirmButton: false,
+    //     timer: 1250
+    // });
+    try {
+        await axios.post("http://localhost:3000/admin/logout", { withCredentials: true });
+        setTimeout(() => {
+            window.location.href = "/index.html";
+        }, 1000);
+    } catch (err) {
+        console.log(err);
+    }
+}
 
 // ============================================
 // INITIALIZATION
@@ -1001,7 +1024,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initUserManagement()
 
   // Load initial data for dashboard
-  renderResumeTable()
+  // renderResumeTable()
+
+  document.getElementById('logout-button').addEventListener('click', logout);
 
   console.log("Admin Dashboard initialized successfully!")
 })
