@@ -141,9 +141,30 @@ async function checkUserRole() {
     try {
         const res = await axios.get("http://localhost:3000/admin/dashboard", { withCredentials: true });
         console.log(res);
+        return "Hello"
         // document.querySelector('.user-name').innerHTML = res.data.admin.fullName;
     } catch (err) {
         // window.location.href = "/index.html";
+        console.log(err);
+    }
+}
+
+const getResumes = async () => {
+    try {
+        const res = await axios.get("http://localhost:3000/admin/getResumes", { withCredentials: true });
+        console.log(res);
+        // renderPosts(res.data);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+const getJobs = async () => {
+    try {
+        const res = await axios.get("http://localhost:3000/admin/getJobs", { withCredentials: true });
+        console.log(res);
+        // renderUsers(res.data);
+    } catch (err) {
         console.log(err);
     }
 }
@@ -304,7 +325,7 @@ window.closeModal = closeModal
 // RESUME ANALYSIS FUNCTIONS
 // ============================================
 
-function renderResumeTable() {
+function renderResumeTable(resumes) {
   const tbody = document.getElementById("resumeTableBody")
   tbody.innerHTML = ""
 
@@ -330,13 +351,13 @@ function renderResumeTable() {
             <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                     <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span class="text-white text-xs font-medium">${resume.user
+                        <span class="text-white text-xs font-medium">${resume.userName
                           .split(" ")
                           .map((n) => n[0])
                           .join("")}</span>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">${resume.user}</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">${resume.userName}</p>
                     </div>
                 </div>
             </td>
@@ -350,7 +371,7 @@ function renderResumeTable() {
                 ${new Date(resume.createdDate).toLocaleDateString()}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button onclick="viewResumeDetails(${resume.id})" class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View Details">
+                <button onclick="viewResumeDetails(${resume._id})" class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View Details">
                     <i class="fas fa-eye"></i>
                 </button>
             </td>
@@ -422,16 +443,45 @@ function viewResumeDetails(id) {
 // Make viewResumeDetails globally accessible
 window.viewResumeDetails = viewResumeDetails
 
-function initResumeFilters() {
+async function initResumeFilters() {
   const searchInput = document.getElementById("resumeSearch")
   const atsFilter = document.getElementById("atsFilter")
   const aiFilter = document.getElementById("aiFilter")
   const dateFilter = document.getElementById("dateFilter")
-
-  const applyFilters = () => {
+  try {
+    const res = await axios.get("http://localhost:3000/admin/getResumes", { withCredentials: true });
+    console.log(res);
+    renderResumeTable(res.data);
+  } catch (err) {
+    console.log(err);
+  }
+  const applyFilters = async () => {
     // In a real app, this would filter the data and re-render
+    const search = searchInput.value.trim();
+    const ats = atsFilter.value;
+    const ai = aiFilter.value;
+    const date = dateFilter.value;
+    console.log(search)
+    console.log(ats)
+    console.log(ai)
+    console.log(date)
     console.log("Applying resume filters...")
-    renderResumeTable()
+    try {
+      const query = new URLSearchParams({
+        search,
+        ats,
+        ai,
+        date,
+      }).toString();
+      console.log(query)
+      const res = await axios.get(`http://localhost:3000/admin/resumes?${query}`, { withCredentials: true });
+      // const data = await res.json();
+      console.log(res)
+      // renderResumeTable(data.resumes); // pass backend data
+    } catch (error) {
+      console.error("Failed to fetch resumes:", error);
+    }
+    // renderResumeTable()
   }
 
   searchInput.addEventListener("input", applyFilters)

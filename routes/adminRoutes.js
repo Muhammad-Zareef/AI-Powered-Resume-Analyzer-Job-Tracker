@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middlewares/verifyToken');
 const verifyAdmin = require('../middlewares/verifyAdmin');
-const { getUsersJobsAndResumes, getResumes, getJobs, updateJob, deleteJob, getUsers, updateUser, deleteUser, logout } = require('../controllers/adminController');
+const { getUsersJobsAndResumes, getResumes, filteredResumes, getJobs, updateJob, deleteJob, getUsers, updateUser, deleteUser, logout } = require('../controllers/adminController');
 
 router.get("/dashboard", verifyToken, verifyAdmin, (req, res) => {
     res.json({
@@ -14,6 +14,7 @@ router.get("/dashboard", verifyToken, verifyAdmin, (req, res) => {
 router.use(verifyToken, verifyAdmin);
 router.get('/getUsersAndBlogs', getUsersJobsAndResumes);
 router.get('/getResumes', getResumes);
+router.get('/resumes', filteredResumes);
 router.get('/getBlogs', getJobs);
 router.put('/updateBlog/:id', updateJob);
 router.delete('/deleteBlog/:id', deleteJob);

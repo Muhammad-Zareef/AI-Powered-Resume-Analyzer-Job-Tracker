@@ -23,8 +23,37 @@ const getUsersJobsAndResumes = async (req, res) => {
 
 const getResumes = async (req, res) => {
     try {
-        const jobs = await Job.find();
-        res.status(200).json(jobs);
+        const resumes = await Resume.find();
+        res.status(200).json(resumes);
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+}
+
+const filteredResumes = async (req, res) => {
+    const { search, ats, ai, date } = req.query;
+    let query = {};
+    if (search) {
+        query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        ];
+    }
+    if (ats) {
+        query.atsScore = { $gte: Number(ats) };
+    }
+    if (ai) {
+        query.aiScore = { $gte: Number(ai) };
+    }
+    if (date) {
+        query.createdAt = { $gte: new Date(date) };
+    }
+    try {
+        const resumes = await Resume.find(query).sort({ createdAt: -1 });
+        res.json({ success: true, resumes });
     } catch (err) {
         res.status(500).json({
             success: false,
@@ -133,4 +162,4 @@ const logout = (req, res) => {
     res.json({ message: "Logged out successfully" });
 };
 
-module.exports = { getUsersJobsAndResumes, getResumes, getJobs, updateJob, deleteJob, getUsers, updateUser, deleteUser, logout };
+module.exports = { getUsersJobsAndResumes, getResumes, filteredResumes, getJobs, updateJob, deleteJob, getUsers, updateUser, deleteUser, logout };

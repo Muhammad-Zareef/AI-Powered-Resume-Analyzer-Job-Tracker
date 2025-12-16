@@ -71,6 +71,7 @@ const analyzeResume = async (req, res) => {
             const aiData = JSON.parse(response.text);
             const newResume = new Resume({
                 userId: user.id,
+                userName: user.name,
                 originalText: req.files.resume.name,
                 aiImprovedText: aiData.correctedVersion,
                 aiScore: aiData.resumeScore,
@@ -116,6 +117,7 @@ const analyzeResume = async (req, res) => {
             const aiData = JSON.parse(response.text);
             const newResume = new Resume({
                 userId: user.id,
+                userName: user.name,
                 originalText: resumeText,
                 aiImprovedText: aiData.correctedVersion,
                 aiScore: aiData.resumeScore,
