@@ -7,8 +7,13 @@ document.addEventListener("DOMContentLoaded", function () {
 async function checkAuth() {
     try {
         const res = await axios.get("http://localhost:3000/api/resume/auth", { withCredentials: true });
-        if (res.data.status === 200) {
-            window.location.href = "./home/index.html";
+        console.log(res);
+        if (res.data.user.role === "admin") {
+            console.log("Admin");
+            window.location.href = "dashboard/index.html";
+        } else {
+            console.log("User");
+            window.location.href = "home/home.html";
         }
     } catch (err) {
 
@@ -114,10 +119,20 @@ async function handleLogin(e) {
     let loginPassword = document.getElementById("loginPassword").value;
     try {
         const res = await axios.post('http://localhost:3000/api/login', { loginEmail, loginPassword }, { withCredentials: true });
+        console.log(res);
         if (res.data.status === 200) {
-            setTimeout(() => {
+            if (res.data.user.role === "admin") {
+                setTimeout(() => {
+                    window.location.href = "./dashboard/index.html";
+                }, 1000);
+            } else {
+                setTimeout(() => {
                 window.location.href = "./home/index.html";
-            }, 1200);
+                }, 1000);
+            }
+            // setTimeout(() => {
+            //     window.location.href = "./home/index.html";
+            // }, 1200);
             Swal.fire({
                 title: "Login Successful!",
                 text: "Welcome back! You have successfully logged in",

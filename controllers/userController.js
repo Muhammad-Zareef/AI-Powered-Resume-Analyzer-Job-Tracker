@@ -23,7 +23,7 @@ const createToken = (user) => {
 
 const login = async (req, res) => {
     try {
-        const { loginEmail, loginPassword } = req.body;
+        const { loginEmail, loginPassword, role } = req.body;
         const user = await User.findOne({ email: loginEmail });
         if (!user) {
             return res.send({
@@ -37,6 +37,7 @@ const login = async (req, res) => {
                     id: user._id,
                     name: user.name,
                     email: user.email,
+                    role: user.role,
                 });
                 const oneDay = 24 * 60 * 60 * 1000;
                 res.cookie("token", token, {
@@ -47,8 +48,9 @@ const login = async (req, res) => {
                 });
                 return res.send({
                     status: 200,
-                    message: "Login successfully",
+                    user,
                     token,
+                    message: "Login successfully",
                 });
             } else {
                 return res.send({
@@ -66,7 +68,7 @@ const login = async (req, res) => {
 }
 
 const signup = (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     bcrypt.genSalt(saltRounds, function (err, salt) {
         bcrypt.hash(password, salt, async function (err, hash) {
             if (err) {

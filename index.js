@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const connectDB = require('./config/db');
 const fileUpload = require("express-fileupload");
+const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 const resumeRoutes = require('./routes/resumeRoutes');
 const jobRoutes = require('./routes/jobRoutes');
@@ -27,6 +28,7 @@ app.use(cors({
 connectDB();
 
 app.use('/api', userRoutes);
+app.use('/admin', adminRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api', jobRoutes);
 
