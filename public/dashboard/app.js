@@ -2,7 +2,7 @@
 // MOCK DATA
 // ============================================
 
-const resumes = [];
+// const resumes = [];
 
 // const resumes = [
 //   {
@@ -65,86 +65,84 @@ const resumes = [];
 //   },
 // ]
 
-let jobs = [
-  {
-    id: 1,
-    company: "TechCorp",
-    position: "Senior Developer",
-    description: "Looking for an experienced developer with React and Node.js skills.",
-    status: "Interview",
-    jobLink: "https://techcorp.com/careers/senior-dev",
-    notes: "Second round interview scheduled for next week",
-    appliedDate: "2024-01-10",
-  },
-  {
-    id: 2,
-    company: "StartupXYZ",
-    position: "Full Stack Engineer",
-    description: "Join our fast-growing startup building the next generation of web apps.",
-    status: "Applied",
-    jobLink: "https://startupxyz.com/jobs/fullstack",
-    notes: "Applied through LinkedIn",
-    appliedDate: "2024-01-12",
-  },
-  {
-    id: 3,
-    company: "BigCorp Inc",
-    position: "Lead Frontend Developer",
-    description: "Lead a team of frontend developers building enterprise applications.",
-    status: "Offer",
-    jobLink: "https://bigcorp.com/careers/lead-frontend",
-    notes: "Received offer, negotiating salary",
-    appliedDate: "2024-01-05",
-  },
-  {
-    id: 4,
-    company: "DesignStudio",
-    position: "UI/UX Designer",
-    description: "Create beautiful and functional user interfaces for web and mobile.",
-    status: "Rejected",
-    jobLink: "https://designstudio.com/careers/ux",
-    notes: "Not enough design experience",
-    appliedDate: "2024-01-08",
-  },
-]
+// let jobs = [
+//   {
+//     id: 1,
+//     company: "TechCorp",
+//     position: "Senior Developer",
+//     description: "Looking for an experienced developer with React and Node.js skills.",
+//     status: "Interview",
+//     jobLink: "https://techcorp.com/careers/senior-dev",
+//     notes: "Second round interview scheduled for next week",
+//     appliedDate: "2024-01-10",
+//   },
+//   {
+//     id: 2,
+//     company: "StartupXYZ",
+//     position: "Full Stack Engineer",
+//     description: "Join our fast-growing startup building the next generation of web apps.",
+//     status: "Applied",
+//     jobLink: "https://startupxyz.com/jobs/fullstack",
+//     notes: "Applied through LinkedIn",
+//     appliedDate: "2024-01-12",
+//   },
+//   {
+//     id: 3,
+//     company: "BigCorp Inc",
+//     position: "Lead Frontend Developer",
+//     description: "Lead a team of frontend developers building enterprise applications.",
+//     status: "Offer",
+//     jobLink: "https://bigcorp.com/careers/lead-frontend",
+//     notes: "Received offer, negotiating salary",
+//     appliedDate: "2024-01-05",
+//   },
+//   {
+//     id: 4,
+//     company: "DesignStudio",
+//     position: "UI/UX Designer",
+//     description: "Create beautiful and functional user interfaces for web and mobile.",
+//     status: "Rejected",
+//     jobLink: "https://designstudio.com/careers/ux",
+//     notes: "Not enough design experience",
+//     appliedDate: "2024-01-08",
+//   },
+// ]
 
-let users = [
-  {
-    id: 1,
-    name: "Admin User",
-    email: "admin@example.com",
-    role: "Admin",
-    createdDate: "2023-12-01",
-  },
-  {
-    id: 2,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    role: "User",
-    createdDate: "2024-01-05",
-  },
-  {
-    id: 3,
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    role: "User",
-    createdDate: "2024-01-08",
-  },
-  {
-    id: 4,
-    name: "Bob Johnson",
-    email: "bob.johnson@example.com",
-    role: "User",
-    createdDate: "2024-01-10",
-  },
-]
+// let users = [
+//   {
+//     id: 1,
+//     name: "Admin User",
+//     email: "admin@example.com",
+//     role: "Admin",
+//     createdDate: "2023-12-01",
+//   },
+//   {
+//     id: 2,
+//     name: "John Doe",
+//     email: "john.doe@example.com",
+//     role: "User",
+//     createdDate: "2024-01-05",
+//   },
+//   {
+//     id: 3,
+//     name: "Jane Smith",
+//     email: "jane.smith@example.com",
+//     role: "User",
+//     createdDate: "2024-01-08",
+//   },
+//   {
+//     id: 4,
+//     name: "Bob Johnson",
+//     email: "bob.johnson@example.com",
+//     role: "User",
+//     createdDate: "2024-01-10",
+//   },
+// ]
 
 async function checkUserRole() {
     try {
         const res = await axios.get("http://localhost:3000/admin/dashboard", { withCredentials: true });
         console.log(res);
-        return "Hello"
-        // document.querySelector('.user-name').innerHTML = res.data.admin.fullName;
     } catch (err) {
         // window.location.href = "/index.html";
         console.log(err);
@@ -155,7 +153,7 @@ const getResumes = async () => {
     try {
         const res = await axios.get("http://localhost:3000/admin/getResumes", { withCredentials: true });
         console.log(res);
-        // renderPosts(res.data);
+        renderResumeTable(res.data);
     } catch (err) {
         console.log(err);
     }
@@ -165,7 +163,18 @@ const getJobs = async () => {
     try {
         const res = await axios.get("http://localhost:3000/admin/getJobs", { withCredentials: true });
         console.log(res);
+        renderJobTable(res.data);
         // renderUsers(res.data);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+const getUsers = async () => {
+    try {
+        const res = await axios.get("http://localhost:3000/admin/users", { withCredentials: true });
+        console.log(res);
+        renderUserTable(res.data);
     } catch (err) {
         console.log(err);
     }
@@ -255,17 +264,11 @@ function initNavigation() {
 
       // Load data for the page
       if (targetPage === "resumes") {
-        try {
-          const res = await axios.get("http://localhost:3000/admin/getResumes", { withCredentials: true });
-          console.log(res);
-          renderResumeTable(res.data);
-        } catch (err) {
-          console.log(err);
-        }
+        getResumes();
       } else if (targetPage === "jobs") {
-        renderJobTable()
+        getJobs();
       } else if (targetPage === "users") {
-        renderUserTable()
+        getUsers();
       }
     })
   })
@@ -334,7 +337,6 @@ window.closeModal = closeModal
 // ============================================
 
 function renderResumeTable(resumes) {
-  console.log(resumes)
   const tbody = document.getElementById("resumeTableBody")
   tbody.innerHTML = ""
 
@@ -380,7 +382,7 @@ function renderResumeTable(resumes) {
                 ${new Date(resume.createdAt).toLocaleDateString()}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button onclick="viewResumeDetails('${resume._id}')" class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View Details">
+                <button onclick="viewResumeDetails('${resume._id}', '${resume.userName}', '${resume.atsScore}', '${resume.aiScore}', '${resume.aiImprovedText}', '${encodeURIComponent(JSON.stringify(resume.suggestions))}', '${resume.createdAt}')" class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View Details">
                     <i class="fas fa-eye"></i>
                 </button>
             </td>
@@ -389,43 +391,40 @@ function renderResumeTable(resumes) {
   })
 }
 
-function viewResumeDetails(id) {
-  console.log(id)
-  const resume = resumes.find((r) => r.id === id)
-  if (!resume) return
-
+function viewResumeDetails(id, userName, atsScore, aiScore, aiImprovedText, suggestions, createdAt) {
+  const safeSuggestions = JSON.parse(decodeURIComponent(suggestions))
   const content = `
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">User</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${resume.userName}</p>
+                    <p class="text-base font-semibold text-gray-900 dark:text-white">${userName}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Created Date</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(resume.createdAt).toLocaleDateString()}</p>
+                    <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(createdAt).toLocaleDateString()}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">ATS Score</p>
-                    <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">${resume.atsScore}%</p>
+                    <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">${atsScore}%</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">AI Score</p>
-                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">${resume.aiScore}%</p>
+                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">${aiScore}%</p>
                 </div>
             </div>
             
             <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">AI Improved Resume Text</p>
                 <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <p class="text-sm text-gray-900 dark:text-white">${resume.aiImprovedText}</p>
+                    <p class="text-sm text-gray-900 dark:text-white">${aiImprovedText}</p>
                 </div>
             </div>
             
             <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">AI Suggestions</p>
                 <ul class="space-y-2">
-                    ${resume.suggestions
+                    ${safeSuggestions
                       .map(
                         (s) => `
                         <li class="flex items-start space-x-2">
@@ -479,7 +478,7 @@ async function initResumeFilters() {
     try {
       const query = new URLSearchParams({ search, ats, ai, date }).toString();
       console.log(query);
-      const res = await axios.get(`http://localhost:3000/admin/resumes?${query}`, { withCredentials: true });
+      const res = await axios.get(`http://localhost:3000/admin/resumes/filter?${query}`, { withCredentials: true });
       // const data = await res.json();
       console.log(res);
       // renderResumeTable(data.resumes); // pass backend data
@@ -499,7 +498,8 @@ async function initResumeFilters() {
 // JOB MANAGEMENT FUNCTIONS
 // ============================================
 
-function renderJobTable() {
+function renderJobTable(jobs = []) {
+  console.log("jobs", jobs)
   const tbody = document.getElementById("jobTableBody")
   tbody.innerHTML = ""
 
@@ -509,16 +509,16 @@ function renderJobTable() {
 
     let statusColor = ""
     switch (job.status) {
-      case "Applied":
+      case "applied":
         statusColor = "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
         break
-      case "Interview":
+      case "interviewing":
         statusColor = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
         break
-      case "Offer":
+      case "offered":
         statusColor = "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
         break
-      case "Rejected":
+      case "rejected":
         statusColor = "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
         break
     }
@@ -532,20 +532,20 @@ function renderJobTable() {
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}">
-                    ${job.status}
+                    ${job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                 </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 ${new Date(job.appliedDate).toLocaleDateString()}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button onclick="viewJobDetails(${job.id})" class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View">
+                <button onclick="viewJobDetails('${job.company}', '${job.position}', '${job.description}', '${job.status}', '${job.link}', '${job.notes}', '${job.appliedDate}', '${job._id}')" class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View">
                     <i class="fas fa-eye"></i>
                 </button>
-                <button onclick="editJob(${job.id})" class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-3" title="Edit">
+                <button onclick="editJob('${job._id}')" class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-3" title="Edit">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button onclick="deleteJob(${job.id})" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300" title="Delete">
+                <button onclick="deleteJob('${job._id}', '${job.company}', '${job.position}')" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300" title="Delete">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
@@ -554,47 +554,44 @@ function renderJobTable() {
   })
 }
 
-function viewJobDetails(id) {
-  const job = jobs.find((j) => j.id === id)
-  if (!job) return
-
+function viewJobDetails(company, position, description, status, jobLink, notes, appliedDate) {
   const content = `
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Company</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${job.company}</p>
+                    <p class="text-base font-semibold text-gray-900 dark:text-white">${company}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Position</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${job.position}</p>
+                    <p class="text-base font-semibold text-gray-900 dark:text-white">${position}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${job.status}</p>
+                    <p class="text-base font-semibold text-gray-900 dark:text-white">${status}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Applied Date</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(job.appliedDate).toLocaleDateString()}</p>
+                    <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(appliedDate).toLocaleDateString()}</p>
                 </div>
             </div>
             
             <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Job Description</p>
                 <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <p class="text-sm text-gray-900 dark:text-white">${job.description}</p>
+                    <p class="text-sm text-gray-900 dark:text-white">${description}</p>
                 </div>
             </div>
             
             <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Job Link</p>
-                <a href="${job.jobLink}" target="_blank" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">${job.jobLink}</a>
+                <a href="${jobLink}" target="_blank" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">${jobLink}</a>
             </div>
             
             <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Notes</p>
                 <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <p class="text-sm text-gray-900 dark:text-white">${job.notes}</p>
+                    <p class="text-sm text-gray-900 dark:text-white">${notes}</p>
                 </div>
             </div>
         </div>
@@ -613,7 +610,6 @@ function viewJobDetails(id) {
 function createJobForm(job = null) {
   const isEdit = job !== null
   const title = isEdit ? "Edit Job" : "Create New Job"
-
   const content = `
         <form id="jobForm" class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
@@ -636,21 +632,21 @@ function createJobForm(job = null) {
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
                     <select id="jobStatus" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                        <option value="Applied" ${isEdit && job.status === "Applied" ? "selected" : ""}>Applied</option>
-                        <option value="Interview" ${isEdit && job.status === "Interview" ? "selected" : ""}>Interview</option>
-                        <option value="Offer" ${isEdit && job.status === "Offer" ? "selected" : ""}>Offer</option>
-                        <option value="Rejected" ${isEdit && job.status === "Rejected" ? "selected" : ""}>Rejected</option>
+                        <option value="applied" ${isEdit && job.status === "applied" ? "selected" : ""}>Applied</option>
+                        <option value="interviewing" ${isEdit && job.status === "interviewing" ? "selected" : ""}>Interviewing</option>
+                        <option value="offered" ${isEdit && job.status === "offered" ? "selected" : ""}>Offered</option>
+                        <option value="rejected" ${isEdit && job.status === "rejected" ? "selected" : ""}>Rejected</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Applied Date</label>
-                    <input type="date" id="jobAppliedDate" value="${isEdit ? job.appliedDate : ""}" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    <input type="date" id="jobAppliedDate" value="${isEdit ? job.appliedDate.split("T")[0] : ""}" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                 </div>
             </div>
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Job Link</label>
-                <input type="url" id="jobLink" value="${isEdit ? job.jobLink : ""}" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                <input type="url" id="jobLink" value="${isEdit ? job.link : ""}" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
             </div>
             
             <div>
@@ -664,7 +660,7 @@ function createJobForm(job = null) {
         <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
             Cancel
         </button>
-        <button onclick="saveJob(${isEdit ? job.id : "null"})" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors">
+        <button onclick="saveJob('${isEdit ? job._id : "null"}')" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors">
             ${isEdit ? "Update" : "Create"}
         </button>
     `
@@ -673,13 +669,13 @@ function createJobForm(job = null) {
   showModal(modal)
 }
 
-function saveJob(id) {
+async function saveJob(id = null) {
   const company = document.getElementById("jobCompany").value
   const position = document.getElementById("jobPosition").value
   const description = document.getElementById("jobDescription").value
   const status = document.getElementById("jobStatus").value
   const appliedDate = document.getElementById("jobAppliedDate").value
-  const jobLink = document.getElementById("jobLink").value
+  const link = document.getElementById("jobLink").value
   const notes = document.getElementById("jobNotes").value
 
   if (!company || !position || !description || !status || !appliedDate || !jobLink) {
@@ -687,47 +683,51 @@ function saveJob(id) {
     return
   }
 
-  if (id) {
+  if (id !== 'null') {
     // Update existing job
-    const job = jobs.find((j) => j.id === id)
-    job.company = company
-    job.position = position
-    job.description = description
-    job.status = status
-    job.appliedDate = appliedDate
-    job.jobLink = jobLink
-    job.notes = notes
+    try {
+          await axios.put(`http://localhost:3000/admin/jobs/${id}`, { company, position, description, status, link, notes, appliedDate });
+      } catch (error) {
+          console.log(error);
+      }
   } else {
     // Create new job
     const newJob = {
-      id: jobs.length + 1,
       company,
       position,
       description,
       status,
       appliedDate,
-      jobLink,
+      link,
       notes,
     }
-    jobs.push(newJob)
+    try {
+        const res = await axios.post('http://localhost:3000/admin/jobs', newJob);
+        console.log(res)
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   // In a real app, this would make an API call
   console.log("Job saved:", id ? "updated" : "created")
-
-  closeModal()
-  renderJobTable()
+  closeModal();
+  getJobs();
 }
 
-function editJob(id) {
-  const job = jobs.find((j) => j.id === id)
-  if (!job) return
-  createJobForm(job)
+async function editJob(id) {
+  try {
+    const res = await axios.get(`http://localhost:3000/admin/getJob/${id}`, { withCredentials: true });
+    console.log(res);
+    createJobForm(res.data.job);
+  } catch (err) {
+    console.log(err);
+  }
 }
 
-function deleteJob(id) {
-  const job = jobs.find((j) => j.id === id)
-  if (!job) return
+function deleteJob(id, company, position) {
+  // const job = jobs.find((j) => j.id === id)
+  // if (!job) return
 
   const content = `
         <div class="text-center py-4">
@@ -735,7 +735,7 @@ function deleteJob(id) {
                 <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-xl"></i>
             </div>
             <p class="text-base text-gray-900 dark:text-white">Are you sure you want to delete this job?</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">${job.company} - ${job.position}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">${company} - ${position}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">This action cannot be undone.</p>
         </div>
     `
@@ -744,7 +744,7 @@ function deleteJob(id) {
         <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
             Cancel
         </button>
-        <button onclick="confirmDeleteJob(${id})" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+        <button onclick="confirmDeleteJob('${id}')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
             Delete
         </button>
     `
@@ -753,14 +753,20 @@ function deleteJob(id) {
   showModal(modal)
 }
 
-function confirmDeleteJob(id) {
-  jobs = jobs.filter((j) => j.id !== id)
+async function confirmDeleteJob(id) {
+  // jobs = jobs.filter((j) => j.id !== id)
 
   // In a real app, this would make an API call
   console.log("Job deleted:", id)
-
-  closeModal()
-  renderJobTable()
+  try {
+    const res = await axios.delete(`http://localhost:3000/admin/jobs/${id}`);
+    console.log(res)
+    closeModal()
+    getJobs();
+    // renderJobTable()
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 // Make job functions globally accessible
@@ -770,19 +776,47 @@ window.deleteJob = deleteJob
 window.saveJob = saveJob
 window.confirmDeleteJob = confirmDeleteJob
 
-function initJobManagement() {
+async function initJobManagement() {
   document.getElementById("createJobBtn").addEventListener("click", () => {
     createJobForm()
-  })
+  });
 
   const searchInput = document.getElementById("jobSearch")
   const statusFilter = document.getElementById("jobStatusFilter")
   const companyFilter = document.getElementById("jobCompanyFilter")
 
-  const applyFilters = () => {
+  try {
+    const res = await axios.get("http://localhost:3000/admin/getJobs", { withCredentials: true });
+    console.log(res);
+    renderJobTable(res.data);
+  } catch (err) {
+    console.log(err);
+  }
+
+  const applyFilters = async () => {
     // In a real app, this would filter the data and re-render
+    const params = new URLSearchParams();
+
+    if (searchInput.value.trim()) {
+      params.append("search", searchInput.value.trim());
+    }
+
+    if (statusFilter.value) {
+      params.append("status", statusFilter.value);
+    }
+
+    if (companyFilter.value.trim()) {
+      params.append("company", companyFilter.value.trim());
+    }
+    console.log(params);
+    const res = await axios.get(`http://localhost:3000/admin/jobs/filter?${params.toString()}`);
+    // const data = await res.json();
+    console.log(res);
+    // if (data.success) {
+    //   renderJobTable(res.data);
+    // }
     console.log("Applying job filters...")
-    renderJobTable()
+    // renderJobTable()
   }
 
   searchInput.addEventListener("input", applyFilters)
@@ -794,7 +828,8 @@ function initJobManagement() {
 // USER MANAGEMENT FUNCTIONS
 // ============================================
 
-function renderUserTable() {
+function renderUserTable(users) {
+  console.log(users)
   const tbody = document.getElementById("userTableBody")
   tbody.innerHTML = ""
 
@@ -821,21 +856,21 @@ function renderUserTable() {
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  user.role === "Admin"
+                  user.role == "admin"
                     ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
                     : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
                 }">
-                    ${user.role}
+                    ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                 </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                ${new Date(user.createdDate).toLocaleDateString()}
+                ${new Date(user.createdAt).toLocaleDateString()}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button onclick="editUser(${user.id})" class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-3" title="Edit">
+                <button onclick="editUser('${user._id}')" class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-3" title="Edit">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button onclick="deleteUser(${user.id})" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300" title="Delete">
+                <button onclick="deleteUser('${user._id}')" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300" title="Delete">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
@@ -859,12 +894,16 @@ function createUserForm(user = null) {
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
                 <input type="email" id="userEmail" value="${isEdit ? user.email : ""}" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
             </div>
+            ${isEdit ? "" : `<div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                <input type="password" id="userPassword" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>`}
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role</label>
                 <select id="userRole" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                    <option value="User" ${isEdit && user.role === "User" ? "selected" : ""}>User</option>
-                    <option value="Admin" ${isEdit && user.role === "Admin" ? "selected" : ""}>Admin</option>
+                    <option value="user" ${isEdit && user.role == "user" ? "selected" : ""}>User</option>
+                    <option value="admin" ${isEdit && user.role == "admin" ? "selected" : ""}>Admin</option>
                 </select>
             </div>
         </form>
@@ -874,7 +913,7 @@ function createUserForm(user = null) {
         <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
             Cancel
         </button>
-        <button onclick="saveUser(${isEdit ? user.id : "null"})" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors">
+        <button onclick="saveUser('${isEdit ? user._id : "null"}')" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors">
             ${isEdit ? "Update" : "Create"}
         </button>
     `
@@ -883,7 +922,7 @@ function createUserForm(user = null) {
   showModal(modal)
 }
 
-function saveUser(id) {
+async function saveUser(id) {
   const name = document.getElementById("userName").value
   const email = document.getElementById("userEmail").value
   const role = document.getElementById("userRole").value
@@ -893,73 +932,94 @@ function saveUser(id) {
     return
   }
 
-  if (id) {
+  if (id !== 'null') {
     // Update existing user
-    const user = users.find((u) => u.id === id)
-    user.name = name
-    user.email = email
-    user.role = role
+    try {
+        const res = await axios.put(`http://localhost:3000/admin/users/${id}`, { name, email, role });
+        console.log(res)
+      } catch (error) {
+          console.log(error);
+      }
   } else {
     // Create new user
     const newUser = {
-      id: users.length + 1,
       name,
       email,
       role,
-      createdDate: new Date().toISOString().split("T")[0],
     }
-    users.push(newUser)
+    try {
+        const res = await axios.post('http://localhost:3000/admin/users', newUser);
+        console.log(res)
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   // In a real app, this would make an API call
   console.log("User saved:", id ? "updated" : "created")
 
   closeModal()
-  renderUserTable()
+  getUsers();
+  // renderUserTable()
 }
 
-function editUser(id) {
-  const user = users.find((u) => u.id === id)
-  if (!user) return
-  createUserForm(user)
+async function editUser(id) {
+  try {
+    const res = await axios.get(`http://localhost:3000/admin/getUser/${id}`, { withCredentials: true });
+    console.log(res);
+    createUserForm(res.data.user);
+  } catch (err) {
+    console.log(err);
+  }
 }
 
-function deleteUser(id) {
-  const user = users.find((u) => u.id === id)
-  if (!user) return
-
-  const content = `
-        <div class="text-center py-4">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 mb-4">
-                <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-xl"></i>
-            </div>
-            <p class="text-base text-gray-900 dark:text-white">Are you sure you want to delete this user?</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">${user.name} (${user.email})</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">This action cannot be undone.</p>
-        </div>
-    `
-
-  const actions = `
-        <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-            Cancel
-        </button>
-        <button onclick="confirmDeleteUser(${id})" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
-            Delete
-        </button>
-    `
-
-  const modal = createModal("Confirm Delete", content, actions)
-  showModal(modal)
+async function deleteUser(id) {
+  console.log(id)
+  // const user = users.find((u) => u.id === id)
+  // if (!user) return
+  try {
+    const res = await axios.get(`http://localhost:3000/admin/getUser/${id}`, { withCredentials: true });
+    console.log(res);
+    const user = res.data.user;
+    const content = `
+          <div class="text-center py-4">
+              <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 mb-4">
+                  <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-xl"></i>
+              </div>
+              <p class="text-base text-gray-900 dark:text-white">Are you sure you want to delete this user?</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">${user.name} (${user.email})</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">This action cannot be undone.</p>
+          </div>
+      `
+      const actions = `
+            <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                Cancel
+            </button>
+            <button onclick="confirmDeleteUser('${id}')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+                Delete
+            </button>
+        `
+      const modal = createModal("Confirm Delete", content, actions)
+      showModal(modal)
+  } catch (err) {
+    console.log(err);
+  }
 }
 
-function confirmDeleteUser(id) {
-  users = users.filter((u) => u.id !== id)
+async function confirmDeleteUser(id) {
+  // users = users.filter((u) => u.id !== id)
 
   // In a real app, this would make an API call
   console.log("User deleted:", id)
-
-  closeModal()
-  renderUserTable()
+  try {
+    const res = await axios.delete(`http://localhost:3000/admin/users/${id}`);
+    console.log(res)
+    closeModal()
+    getUsers();
+    // renderJobTable()
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 // Make user functions globally accessible

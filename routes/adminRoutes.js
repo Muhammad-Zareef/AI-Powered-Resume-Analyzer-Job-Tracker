@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middlewares/verifyToken');
 const verifyAdmin = require('../middlewares/verifyAdmin');
-const { getUsersJobsAndResumes, getResumes, filteredResumes, getJobs, updateJob, deleteJob, getUsers, updateUser, deleteUser, logout } = require('../controllers/adminController');
+const { getUsersJobsAndResumes, getResumes, filterResumes, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout } = require('../controllers/adminController');
 
 router.get("/dashboard", verifyToken, verifyAdmin, (req, res) => {
     res.json({
@@ -14,13 +14,18 @@ router.get("/dashboard", verifyToken, verifyAdmin, (req, res) => {
 router.use(verifyToken, verifyAdmin);
 router.get('/getUsersAndBlogs', getUsersJobsAndResumes);
 router.get('/getResumes', getResumes);
-router.get('/resumes', filteredResumes);
-router.get('/getBlogs', getJobs);
-router.put('/updateBlog/:id', updateJob);
-router.delete('/deleteBlog/:id', deleteJob);
-router.get('/getUsers', getUsers);
-router.put('/updateUser/:id', updateUser);
-router.delete('/deleteUser/:id', deleteUser);
+router.get('/resumes/filter', filterResumes);
+router.get('/getJobs', getJobs);
+router.get('/jobs/filter', filterJobs);
+router.get('/getJob/:id', getJobById);
+router.post('/jobs', addJob);
+router.put('/jobs/:id', updateJob);
+router.delete('/jobs/:id', deleteJob);
+router.get('/users', getUsers);
+router.get('/getUser/:id', getUserById);
+router.post('/users', addUser);
+router.put('/users/:id', updateUser);
+router.delete('/users/:id', deleteUser);
 router.post('/logout', logout);
 
 module.exports = router;
