@@ -145,7 +145,7 @@ async function checkUserRole() {
         console.log(res);
         document.getElementById('admin-name').textContent = res.data.admin.name;
     } catch (err) {
-        // window.location.href = "/index.html";
+        window.location.href = "/index.html";
         console.log(err);
     }
 }
@@ -361,6 +361,9 @@ function initNavigation() {
         getJobs();
       } else if (targetPage === "users") {
         getUsers();
+      } else if (targetPage === "dashboard") {
+        loadDashboardStats();
+        loadRecentActivity();
       }
     })
   })
@@ -594,7 +597,6 @@ function renderJobTable(jobs = []) {
   console.log("jobs", jobs)
   const tbody = document.getElementById("jobTableBody")
   tbody.innerHTML = ""
-
   jobs.forEach((job) => {
     const row = document.createElement("tr")
     row.className = "hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -643,7 +645,7 @@ function renderJobTable(jobs = []) {
             </td>
         `
     tbody.appendChild(row)
-  })
+  });
 }
 
 function viewJobDetails(company, position, description, status, jobLink, notes, appliedDate) {
@@ -904,9 +906,9 @@ async function initJobManagement() {
     const res = await axios.get(`http://localhost:3000/admin/jobs/filter?${params.toString()}`);
     // const data = await res.json();
     console.log(res);
-    // if (data.success) {
-    //   renderJobTable(res.data);
-    // }
+    if (res.data.success) {
+      renderJobTable(res.data.jobs);
+    }
     console.log("Applying job filters...")
     // renderJobTable()
   }
@@ -973,10 +975,12 @@ function renderUserTable(users) {
 
 function createUserForm(user = null) {
   const isEdit = user !== null
+  console.log(isEdit)
   const title = isEdit ? "Edit User" : "Create New User"
+  const showPasswordField = !isEdit;
 
   const content = `
-        <form id="userForm" class="space-y-4">
+        <form id="userForm" class="space-y-4" autocomplete="off">
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
                 <input type="text" id="userName" value="${isEdit ? user.name : ""}" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
@@ -986,10 +990,19 @@ function createUserForm(user = null) {
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
                 <input type="email" id="userEmail" value="${isEdit ? user.email : ""}" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
             </div>
-            ${isEdit ? "" : `<div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
-                <input type="password" id="userPassword" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-            </div>`}
+            ${showPasswordField ? `
+  <div>
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      Password
+    </label>
+    <input
+      type="password"
+      id="userPassword"
+      required
+      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+    >
+  </div>
+` : ""}
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role</label>
@@ -1018,41 +1031,41 @@ async function saveUser(id) {
   const name = document.getElementById("userName").value
   const email = document.getElementById("userEmail").value
   const role = document.getElementById("userRole").value
-
   if (!name || !email || !role) {
     alert("Please fill in all required fields")
     return
   }
-
   if (id !== 'null') {
     // Update existing user
     try {
         const res = await axios.put(`http://localhost:3000/admin/users/${id}`, { name, email, role });
-        console.log(res)
+        console.log(res);
+        closeModal();
+        getUsers();
       } catch (error) {
           console.log(error);
       }
   } else {
     // Create new user
+    const password = document.getElementById("userPassword").value
     const newUser = {
       name,
       email,
+      password,
       role,
     }
     try {
         const res = await axios.post('http://localhost:3000/admin/users', newUser);
         console.log(res)
+        closeModal();
+        getUsers();
     } catch (err) {
+      alert(err.response.data.message);
       console.log(err);
     }
   }
-
   // In a real app, this would make an API call
   console.log("User saved:", id ? "updated" : "created")
-
-  closeModal()
-  getUsers();
-  // renderUserTable()
 }
 
 async function editUser(id) {
@@ -1066,9 +1079,6 @@ async function editUser(id) {
 }
 
 async function deleteUser(id) {
-  console.log(id)
-  // const user = users.find((u) => u.id === id)
-  // if (!user) return
   try {
     const res = await axios.get(`http://localhost:3000/admin/getUser/${id}`, { withCredentials: true });
     console.log(res);

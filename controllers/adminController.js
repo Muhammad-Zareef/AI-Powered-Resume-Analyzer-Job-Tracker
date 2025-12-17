@@ -2,6 +2,8 @@
 const Job = require('../models/jobModel');
 const User = require('../models/userModel');
 const Resume = require('../models/resumeModel');
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 const getDashboardStats = async (req, res) => {
     try {
@@ -37,7 +39,7 @@ const getRecentActivity = async (req, res) => {
     try {
         const resumes = await Resume.find().sort({ createdAt: -1 }).limit(3).select("userName createdAt");
 
-        const jobs = await Job.find().sort({ createdAt: -1 }).limit(3).select("title company createdAt");
+        const jobs = await Job.find().sort({ createdAt: -1 }).limit(3).select("position company createdAt");
 
         const users = await User.find().sort({ createdAt: -1 }).limit(3).select("email createdAt");
 
@@ -51,7 +53,7 @@ const getRecentActivity = async (req, res) => {
             ...jobs.map(j => ({
                 type: "job",
                 title: "New job added",
-                description: `${j.title} at ${j.company}`,
+                description: `${j.position} at ${j.company}`,
                 createdAt: j.createdAt
             })),
             ...users.map(u => ({
@@ -145,7 +147,7 @@ const filterResumes = async (req, res) => {
 
 const getJobs = async (req, res) => {
     try {
-        const jobs = await Job.find();
+        const jobs = await Job.find().sort({ createdAt: -1 });
         res.status(200).json(jobs);
     } catch (err) {
         res.status(500).json({
@@ -258,7 +260,7 @@ const deleteJob = async (req, res) => {
 
 const getUsers = async (req, res) => {
     try {
-        const users = await User.find();
+        const users = await User.find().sort({ createdAt: -1 });
         res.status(200).json(users);
     } catch (err) {
         res.status(500).json({
@@ -285,21 +287,36 @@ const getUserById = async (req, res) => {
 }
 
 const addUser = async (req, res) => {
-    try {
-        const { name, email, role } = req.body;
-        console.log(name)
-        const newUser = new User({ name, email, role });
-        await newUser.save();
-        res.send({
-            success: true,
-            job: newUser
+    const { name, email, password, role } = req.body;
+    bcrypt.genSalt(saltRounds, function (err, salt) {
+        bcrypt.hash(password, salt, async function (err, hash) {
+            if (err) {
+                return console.log(err);
+            }
+            try {
+                const newUser = new User({ name, email, password: hash, role });
+                await newUser.save();
+                res.status(200).send({
+                    status: 200,
+                    newUser,
+                    message: "User has been created successfully"
+                });
+            } catch (err) {
+                if (err.code === 11000) {
+                    return res.status(400).send({
+                        status: 400,
+                        success: false,
+                        message: "Email already exists. Please use another email"
+                    });
+                }
+                res.status(500).json({
+                    success: false,
+                    status: 500,
+                    message: "Internal Server Error",
+                });
+            }
         });
-    } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
-    }
+    });
 }
 
 const updateUser = async (req, res) => {
