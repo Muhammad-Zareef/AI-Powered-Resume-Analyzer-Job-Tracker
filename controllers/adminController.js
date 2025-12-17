@@ -3,6 +3,71 @@ const Job = require('../models/jobModel');
 const User = require('../models/userModel');
 const Resume = require('../models/resumeModel');
 
+const getDashboardStats = async (req, res) => {
+    try {
+        const totalResumes = await Resume.countDocuments();
+        const totalJobs = await Job.countDocuments();
+        const totalUsers = await User.countDocuments();
+
+        // (Optional) growth logic
+        const resumeGrowth = 12; // calculate if needed
+        const jobGrowth = 8;
+        const userGrowth = 15;
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalResumes,
+                resumeGrowth,
+                totalJobs,
+                jobGrowth,
+                totalUsers,
+                userGrowth
+            }
+            });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to load dashboard stats"
+        });
+    }
+}
+
+const getRecentActivity = async (req, res) => {
+    try {
+        const resumes = await Resume.find().sort({ createdAt: -1 }).limit(3).select("userName createdAt");
+
+        const jobs = await Job.find().sort({ createdAt: -1 }).limit(3).select("title company createdAt");
+
+        const users = await User.find().sort({ createdAt: -1 }).limit(3).select("email createdAt");
+
+        const activity = [
+            ...resumes.map(r => ({
+                type: "resume",
+                title: "New resume analyzed",
+                description: `${r.userName} uploaded a resume`,
+                createdAt: r.createdAt
+            })),
+            ...jobs.map(j => ({
+                type: "job",
+                title: "New job added",
+                description: `${j.title} at ${j.company}`,
+                createdAt: j.createdAt
+            })),
+            ...users.map(u => ({
+                type: "user",
+                title: "New user registered",
+                description: u.email,
+                createdAt: u.createdAt
+            }))
+        ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+
+        res.json({ success: true, data: activity });
+    } catch (err) {
+        res.status(500).json({ success: false });
+    }
+}
+
 const getUsersJobsAndResumes = async (req, res) => {
     try {
         const users = await User.find();
@@ -280,4 +345,4 @@ const logout = (req, res) => {
     res.json({ message: "Logged out successfully" });
 };
 
-module.exports = { getUsersJobsAndResumes, getResumes, filterResumes, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout };
+module.exports = { getDashboardStats, getRecentActivity, getUsersJobsAndResumes, getResumes, filterResumes, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout };

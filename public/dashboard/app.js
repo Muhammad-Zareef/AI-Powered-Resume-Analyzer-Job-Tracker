@@ -143,6 +143,7 @@ async function checkUserRole() {
     try {
         const res = await axios.get("http://localhost:3000/admin/dashboard", { withCredentials: true });
         console.log(res);
+        document.getElementById('admin-name').textContent = res.data.admin.name;
     } catch (err) {
         // window.location.href = "/index.html";
         console.log(err);
@@ -179,6 +180,97 @@ const getUsers = async () => {
         console.log(err);
     }
 }
+
+async function loadDashboardStats() {
+  try {
+      const res = await axios.get("http://localhost:3000/admin/dashboard-stats", { withCredentials: true });
+    console.log(res)
+    if (!res.data.success) return;
+    const stats = res.data.data;
+
+    document.getElementById("totalResumes").textContent = stats.totalResumes;
+    document.getElementById("resumeGrowth").textContent = stats.resumeGrowth + "%";
+
+    document.getElementById("totalJobs").textContent = stats.totalJobs;
+    document.getElementById("jobGrowth").textContent = stats.jobGrowth + "%";
+
+    document.getElementById("totalUsers").textContent = stats.totalUsers;
+    document.getElementById("userGrowth").textContent = stats.userGrowth + "%";
+  } catch (err) {
+    console.error("Dashboard stats error:", err);
+  }
+}
+
+const activityConfig = {
+  resume: {
+    bg: "bg-primary-100 dark:bg-primary-900",
+    icon: "fas fa-file-upload text-primary-600 dark:text-primary-400"
+  },
+  job: {
+    bg: "bg-green-100 dark:bg-green-900",
+    icon: "fas fa-briefcase text-green-600 dark:text-green-400"
+  },
+  user: {
+    bg: "bg-purple-100 dark:bg-purple-900",
+    icon: "fas fa-user-plus text-purple-600 dark:text-purple-400"
+  }
+}
+
+function timeAgo(date) {
+  const seconds = Math.floor((Date.now() - new Date(date)) / 1000);
+
+  if (seconds < 60) return "just now";
+
+  const intervals = [
+    { label: "year", seconds: 31536000 },
+    { label: "month", seconds: 2592000 },
+    { label: "week", seconds: 604800 },
+    { label: "day", seconds: 86400 },
+    { label: "hour", seconds: 3600 },
+    { label: "minute", seconds: 60 }
+  ];
+
+  for (const interval of intervals) {
+    const count = Math.floor(seconds / interval.seconds);
+    if (count >= 1) {
+      return `${count} ${interval.label}${count > 1 ? "s" : ""} ago`;
+    }
+  }
+}
+
+async function loadRecentActivity() {
+  try {
+    const res = await axios.get("http://localhost:3000/admin/recent-activity", { withCredentials: true });
+    // const res = await fetch("/api/admin/recent-activity");
+    const result = res.data;
+    console.log(res)
+    if (!result.success) return;
+  
+    const container = document.getElementById("recentActivityList");
+    container.innerHTML = "";
+  
+    result.data.forEach((item, index) => {
+      const config = activityConfig[item.type];
+  
+      container.innerHTML += `
+        <div class="flex items-start space-x-3 pb-4 ${index !== result.data.length - 1 ? "border-b border-gray-200 dark:border-gray-700" : ""}">
+          <div class="w-10 h-10 ${config.bg} rounded-full flex items-center justify-center flex-shrink-0">
+            <i class="${config.icon}"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900 dark:text-white">${item.title}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              ${item.description} • ${timeAgo(item.createdAt)}
+            </p>
+          </div>
+        </div>
+      `;
+    });
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 
 // ============================================
 // THEME MANAGEMENT
@@ -1057,10 +1149,15 @@ async function logout() {
 // ============================================
 
 document.addEventListener("DOMContentLoaded", () => {
+  
+  checkUserRole();
+
+  loadDashboardStats();
+
+  loadRecentActivity();
+
   // Initialize theme
   initTheme()
-
-  checkUserRole();
 
   // Initialize sidebar
   initSidebar()
@@ -1084,6 +1181,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initUserManagement()
 
   // Load initial data for dashboard
+  getResumes();
   // renderResumeTable()
 
   document.getElementById('logout-button').addEventListener('click', logout);
