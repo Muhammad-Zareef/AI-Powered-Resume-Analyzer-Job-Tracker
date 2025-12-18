@@ -5,44 +5,30 @@ const Resume = require('../models/resumeModel');
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
+const auth = (req, res) => {
+    res.json({ message: "Welcome Admin Dashboard", admin: req.user.user });
+}
+
 const getDashboardStats = async (req, res) => {
     try {
         const totalResumes = await Resume.countDocuments();
         const totalJobs = await Job.countDocuments();
         const totalUsers = await User.countDocuments();
-
-        // (Optional) growth logic
-        const resumeGrowth = 12; // calculate if needed
+        // growth logic (calculate in future)
+        const resumeGrowth = 12;
         const jobGrowth = 8;
         const userGrowth = 15;
-
-        res.status(200).json({
-            success: true,
-            data: {
-                totalResumes,
-                resumeGrowth,
-                totalJobs,
-                jobGrowth,
-                totalUsers,
-                userGrowth
-            }
-            });
+        res.status(200).json({ success: true, data: { totalResumes, resumeGrowth, totalJobs, jobGrowth, totalUsers, userGrowth }});
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Failed to load dashboard stats"
-        });
+        res.status(500).json({ success: false, message: "Failed to load dashboard stats" });
     }
 }
 
 const getRecentActivity = async (req, res) => {
     try {
         const resumes = await Resume.find().sort({ createdAt: -1 }).limit(3).select("userName createdAt");
-
         const jobs = await Job.find().sort({ createdAt: -1 }).limit(3).select("position company createdAt");
-
         const users = await User.find().sort({ createdAt: -1 }).limit(3).select("email createdAt");
-
         const activity = [
             ...resumes.map(r => ({
                 type: "resume",
@@ -63,28 +49,9 @@ const getRecentActivity = async (req, res) => {
                 createdAt: u.createdAt
             }))
         ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
-
         res.json({ success: true, data: activity });
     } catch (err) {
         res.status(500).json({ success: false });
-    }
-}
-
-const getUsersJobsAndResumes = async (req, res) => {
-    try {
-        const users = await User.find();
-        const jobs = await Job.find();
-        const resumes = await Resume.find();
-        res.status(200).json({
-            users,
-            jobs,
-            resumes,
-        });
-    } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
     }
 }
 
@@ -93,10 +60,7 @@ const getResumes = async (req, res) => {
         const resumes = await Resume.find();
         res.status(200).json(resumes);
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -111,37 +75,25 @@ const filterResumes = async (req, res) => {
     }
     if (ats) {
         const [min, max] = ats.split("-").map(Number);
-        query.atsScore = {
-            $gte: min,
-            $lte: max
-        };
+        query.atsScore = { $gte: min, $lte: max };
     }
     if (ai) {
         const [min, max] = ai.split("-").map(Number);
-        query.aiScore = {
-            $gte: min,
-            $lte: max
-        };
+        query.aiScore = { $gte: min, $lte: max };
     }
     if (date) {
         const start = new Date(date);
         start.setHours(0, 0, 0, 0);
         const end = new Date(date);
         end.setHours(23, 59, 59, 999);
-        query.createdAt = {
-            $gte: start,
-            $lte: end
-        };
+        query.createdAt = { $gte: start, $lte: end };
     }
     console.log(JSON.stringify(query, null, 2));
     try {
         const resumes = await Resume.find(query).sort({ createdAt: -1 });
         res.json({ success: true, resumes });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -150,10 +102,7 @@ const getJobs = async (req, res) => {
         const jobs = await Job.find().sort({ createdAt: -1 });
         res.status(200).json(jobs);
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -161,32 +110,21 @@ const filterJobs = async (req, res) => {
     try {
         const { search, status, company } = req.query;
         let query = {};
-
-        // 🔍 Search by job title or company
+        // Search by job position
         if (search && search.trim() !== "") {
             query.position = { $regex: search.trim(), $options: "i" };
         }
-
-        // 📌 Status filter
+        // Status filter
         if (status) {
             query.status = status;
         }
-
-        // 🏢 Company filter
+        // Company filter
         if (company) {
             query.company = new RegExp(company, "i");
         }
-
-        console.log(JSON.stringify(query, null, 2));
-
         const jobs = await Job.find(query).sort({ createdAt: -1 });
         res.json({ success: true, jobs });
-
-    } catch (err) {
-            res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+    } catch (err) { res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -194,34 +132,21 @@ const getJobById = async (req, res) => {
     try {
         const { id } = req.params;
         const job = await Job.findById(id);
-        res.status(200).json({
-            message: "Successfully!",
-            job
-        });
+        res.status(200).json({ message: "Successfully!", job });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
 const addJob = async (req, res) => {
     try {
         const userId = req.user.user.id;
-        console.log("here")
         const { company, position, description, status, link, notes, appliedDate } = req.body;
         const newJob = new Job({ userId, company, position, description, status, link, notes, appliedDate });
         await newJob.save();
-        res.send({
-            success: true,
-            job: newJob
-        });
+        res.send({ success: true, job: newJob });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -230,15 +155,9 @@ const updateJob = async (req, res) => {
         const { id } = req.params;
         const { company, position, description, status, link, notes, appliedDate } = req.body;
         const updatedJob = await Job.findByIdAndUpdate(id, { company, position, description, status, link, notes, appliedDate }, {new: true});
-        res.status(200).json({
-            message: "Job updated successfully!",
-            updatedJob
-        });
+        res.status(200).json({ message: "Job updated successfully!", updatedJob });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -246,15 +165,9 @@ const deleteJob = async (req, res) => {
     try {
         const { id } = req.params;
         const deletedJob = await Job.findByIdAndDelete(id);
-        res.status(200).json({
-            message: "Job deleted successfully",
-            deletedJob
-        });
+        res.status(200).json({ message: "Job deleted successfully", deletedJob });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -263,10 +176,7 @@ const getUsers = async (req, res) => {
         const users = await User.find().sort({ createdAt: -1 });
         res.status(200).json(users);
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -274,15 +184,9 @@ const getUserById = async (req, res) => {
     try {
         const { id } = req.params;
         const user = await User.findById(id);
-        res.status(200).json({
-            message: "Successfully!",
-            user
-        });
+        res.status(200).json({ message: "Successfully!", user });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -296,24 +200,12 @@ const addUser = async (req, res) => {
             try {
                 const newUser = new User({ name, email, password: hash, role });
                 await newUser.save();
-                res.status(200).send({
-                    status: 200,
-                    newUser,
-                    message: "User has been created successfully"
-                });
+                res.status(200).send({ status: 200, newUser, message: "User has been created successfully" });
             } catch (err) {
                 if (err.code === 11000) {
-                    return res.status(400).send({
-                        status: 400,
-                        success: false,
-                        message: "Email already exists. Please use another email"
-                    });
+                    return res.status(400).send({ status: 400, success: false, message: "Email already exists. Please use another email" });
                 }
-                res.status(500).json({
-                    success: false,
-                    status: 500,
-                    message: "Internal Server Error",
-                });
+                res.status(500).json({ success: false, status: 500, message: "Internal Server Error", });
             }
         });
     });
@@ -324,42 +216,25 @@ const updateUser = async (req, res) => {
         const { id } = req.params;
         const { name, email, role } = req.body;
         const updatedUser = await User.findByIdAndUpdate(id, { name, email, role }, {new: true});
-        res.status(200).json({
-            message: "User updated successfully!",
-            updatedUser
-        });
+        res.status(200).json({ message: "User updated successfully!", updatedUser });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
-
 
 const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
         const deletedUser = await User.findByIdAndDelete(id);
-        res.status(200).json({
-            message: "User deleted successfully",
-            deletedUser
-        });
+        res.status(200).json({ message: "User deleted successfully", deletedUser });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
 const logout = (req, res) => {
-    res.clearCookie("token", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None"
-    });
+    res.clearCookie("token", { httpOnly: true, secure: true, sameSite: "None" });
     res.json({ message: "Logged out successfully" });
-};
+}
 
-module.exports = { getDashboardStats, getRecentActivity, getUsersJobsAndResumes, getResumes, filterResumes, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout };
+module.exports = { auth, getDashboardStats, getRecentActivity, getResumes, filterResumes, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout };

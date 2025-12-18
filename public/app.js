@@ -7,12 +7,9 @@ document.addEventListener("DOMContentLoaded", function () {
 async function checkAuth() {
     try {
         const res = await axios.get("http://localhost:3000/api/resume/auth", { withCredentials: true });
-        console.log(res);
         if (res.data.user.role === "admin") {
-            console.log("Admin");
             window.location.href = "dashboard/index.html";
         } else {
-            console.log("User");
             window.location.href = "home/home.html";
         }
     } catch (err) {
@@ -79,12 +76,7 @@ function checkPasswordStrength(password) {
     if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
     if (/\d/.test(password)) strength++;
     if (/[^a-zA-Z\d]/.test(password)) strength++;
-    strengthBar.classList.remove(
-        "strength-weak",
-        "strength-fair",
-        "strength-good",
-        "strength-strong"
-    );
+    strengthBar.classList.remove( "strength-weak", "strength-fair", "strength-good", "strength-strong" );
     if (strength < 2) {
         strengthBar.classList.add("strength-weak");
         strengthText.textContent = "Weak password";
@@ -119,20 +111,12 @@ async function handleLogin(e) {
     let loginPassword = document.getElementById("loginPassword").value;
     try {
         const res = await axios.post('http://localhost:3000/api/login', { loginEmail, loginPassword }, { withCredentials: true });
-        console.log(res);
         if (res.data.status === 200) {
             if (res.data.user.role === "admin") {
-                setTimeout(() => {
-                    window.location.href = "./dashboard/index.html";
-                }, 1000);
+                setTimeout(() => { window.location.href = "./dashboard/index.html"; }, 1000);
             } else {
-                setTimeout(() => {
-                window.location.href = "./home/index.html";
-                }, 1000);
+                setTimeout(() => { window.location.href = "./home/index.html"; }, 1000);
             }
-            // setTimeout(() => {
-            //     window.location.href = "./home/index.html";
-            // }, 1200);
             Swal.fire({
                 title: "Login Successful!",
                 text: "Welcome back! You have successfully logged in",
@@ -150,7 +134,7 @@ async function handleLogin(e) {
             });
         }
     } catch (error) {
-        console.log(error);
+        console.error('Login error:', error);
     }
 }
 
@@ -169,20 +153,18 @@ async function handleSignup(e) {
     confirmPasswordError.classList.add("hidden");
     try {
         const res = await axios.post("http://localhost:3000/api/signup", { name, email, password });
-        if (res.data.status == 200) {
-        setTimeout(() => {
-            showAuthModal('login');
-        }, 1200);
-        Swal.fire({
-            title: "Signup Successful!",
-            text: "Your account has been created successfully",
-            icon: "success",
-            showConfirmButton: false,
-            timer: 1500
-        });
-    } else {
-        console.log(res.data.message);
-    }
+        if (res.data.status == 20) {
+            setTimeout(() => { showAuthModal('login'); }, 1200);
+            Swal.fire({
+                title: "Signup Successful!",
+                text: "Your account has been created successfully",
+                icon: "success",
+                showConfirmButton: false,
+                timer: 1500
+            });
+        } else {
+            console.error('Signup error', res.data.message);
+        }
     } catch (err) {
         Swal.fire({
             title: "Oops!",
@@ -191,20 +173,16 @@ async function handleSignup(e) {
             showConfirmButton: false,
             timer: 2500
         });
-        console.log(err.response.data.message);
+        console.error('Signup error:', err.response.data.message);
     }
 }
 
 // Close modal on ESC key
 document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-        closeAuthModal();
-    }
+    if (e.key === "Escape") closeAuthModal();
 });
 
 // Close modal on background click
 document.getElementById("authModal").addEventListener("click", (e) => {
-    if (e.target.id === "authModal") {
-        closeAuthModal();
-    }
+    if (e.target.id === "authModal") closeAuthModal();
 });

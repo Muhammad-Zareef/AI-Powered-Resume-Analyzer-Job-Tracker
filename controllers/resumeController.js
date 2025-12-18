@@ -8,11 +8,7 @@ require("dotenv").config();
 
 const auth = async (req, res) => {
     const { user } = req.user;
-    res.send({
-        status: 200,
-        user,
-        message: "Welcome User",
-    });
+    res.send({ status: 200, user, message: "Welcome User" });
 }
 
 const getResumes = async (req, res) => {
@@ -21,10 +17,7 @@ const getResumes = async (req, res) => {
         const resumes = await Resume.find({ userId }).sort({ createdAt: -1 });
         res.status(200).json(resumes);
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: err.message,
-        });
+        res.status(500).json({ success: false, message: err.message, });
     }
 }
 
@@ -79,11 +72,7 @@ const analyzeResume = async (req, res) => {
                 suggestions: aiData.suggestions
             });
             await newResume.save();
-            res.status(200).send({
-                status: 200,
-                newResume,
-                message: "Response generated successfully"
-            });
+            res.status(200).send({ status: 200, newResume, message: "Response generated successfully" });
         } else if (req.body.resumeText) {
             console.log("Text received:", req.body.resumeText);
             // TEXT flow
@@ -125,20 +114,12 @@ const analyzeResume = async (req, res) => {
                 suggestions: aiData.suggestions
             });
             await newResume.save();
-            res.status(200).send({
-                status: 200,
-                newResume,
-                message: "Response generated successfully"
-            });
+            res.status(200).send({ status: 200, newResume, message: "Response generated successfully" });
         } else {
             return res.status(400).json({ error: "No resume provided" });
         }
     } catch (err) {
-        res.status(500).json({
-            status: 500,
-            success: false,
-            message: "Internal Server Error",
-        });
+        res.status(500).json({ status: 500, success: false, message: "Internal Server Error", });
     }
 }
 
@@ -146,15 +127,9 @@ const deleteResume = async (req, res) => {
     try {
         const { id } = req.params;
         const deletedResume = await Resume.findByIdAndDelete(id);
-        res.status(200).json({
-            message: "Resume deleted successfully",
-            deletedResume
-        });
+        res.status(200).json({ message: "Resume deleted successfully", deletedResume });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -162,14 +137,9 @@ const clearAllHistory = async (req, res) => {
     try {
         const { user } = req.user;
         await Resume.deleteMany({ userId: user.id });
-        res.status(200).json({
-            message: "Resume history has been successfully deleted"
-        });
+        res.status(200).json({ message: "Resume history has been successfully deleted" });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 

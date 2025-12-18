@@ -7,10 +7,7 @@ const getJobs = async (req, res) => {
         const jobs = await Job.find({ userId }).sort({ createdAt: -1 });
         res.status(200).json(jobs);
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -20,15 +17,9 @@ const addJob = async (req, res) => {
         const { company, position, description, status, link, notes, appliedDate } = req.body;
         const newJob = new Job({ userId, company, position, description, status, link, notes, appliedDate });
         await newJob.save();
-        res.send({
-            success: true,
-            job: newJob
-        });
+        res.send({ success: true, job: newJob });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -37,15 +28,9 @@ const updateJob = async (req, res) => {
         const { id } = req.params;
         const { company, position, jobDescription, status, notes } = req.body;
         const updatedJob = await Job.findByIdAndUpdate(id, { company, position, jobDescription, status, notes }, {new: true});
-        res.status(200).json({
-            message: "Job updated successfully!",
-            updatedJob
-        });
+        res.status(200).json({ message: "Job updated successfully!", updatedJob });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -53,15 +38,9 @@ const deleteJob = async (req, res) => {
     try {
         const { id } = req.params;
         const deletedJob = await Job.findByIdAndDelete(id);
-        res.status(200).json({
-            message: "Job deleted successfully",
-            deletedJob
-        });
+        res.status(200).json({ message: "Job deleted successfully", deletedJob });
     } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error"
-        });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
