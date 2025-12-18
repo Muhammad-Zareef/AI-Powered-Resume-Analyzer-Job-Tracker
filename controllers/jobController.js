@@ -11,6 +11,16 @@ const getJobs = async (req, res) => {
     }
 }
 
+const getJobById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const job = await Job.findById(id);
+        res.status(200).json({ message: "Successfully!", job });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+}
+
 const addJob = async (req, res) => {
     try {
         const userId = req.user.user.id;
@@ -44,4 +54,4 @@ const deleteJob = async (req, res) => {
     }
 }
 
-module.exports = { getJobs, addJob, updateJob, deleteJob };
+module.exports = { getJobs, getJobById, addJob, updateJob, deleteJob };

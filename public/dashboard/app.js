@@ -100,15 +100,15 @@ async function loadRecentActivity() {
             const config = activityConfig[item.type];
             container.innerHTML += `
                 <div class="flex items-start space-x-3 pb-4 ${index !== result.data.length - 1 ? 'border-b border-gray-200 dark:border-gray-700' : ''}">
-                  <div class="w-10 h-10 ${config.bg} rounded-full flex items-center justify-center flex-shrink-0">
+                    <div class="w-10 h-10 ${config.bg} rounded-full flex items-center justify-center flex-shrink-0">
                     <i class="${config.icon}"></i>
-                  </div>
-                  <div class="flex-1">
+                    </div>
+                    <div class="flex-1">
                     <p class="text-sm font-medium text-gray-900 dark:text-white">${item.title}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                      ${item.description} • ${timeAgo(item.createdAt)}
-                    </p>
-                  </div>
+                        ${item.description} • ${timeAgo(item.createdAt)}
+                        </p>
+                    </div>
                 </div>
             `;
         });
@@ -311,7 +311,7 @@ function renderResumeTable(resumes) {
                 ${new Date(resume.createdAt).toLocaleDateString()}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button onclick="viewResumeDetails('${resume._id}', '${resume.userName}', '${resume.atsScore}', '${resume.aiScore}', '${resume.aiImprovedText}', '${encodeURIComponent(JSON.stringify(resume.suggestions))}', '${resume.createdAt}')" 
+                <button onclick="viewResumeDetails('${resume._id}')" 
                 class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View Details">
                     <i class="fas fa-eye"></i>
                 </button>
@@ -321,54 +321,60 @@ function renderResumeTable(resumes) {
     });
 }
 
-function viewResumeDetails( id, userName, atsScore, aiScore, aiImprovedText, suggestions, createdAt) {
-    const safeSuggestions = JSON.parse(decodeURIComponent(suggestions));
-    const content = `
-        <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">User</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${userName}</p>
+async function viewResumeDetails(id) {
+    try {
+        const res = await axios.get(`http://localhost:3000/admin/resumes/${id}`, { withCredentials: true });
+        console.log(res)
+        const resume = res.data.resume;
+        const content = `
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">User</p>
+                        <p class="text-base font-semibold text-gray-900 dark:text-white">${resume.userName}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Created Date</p>
+                        <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(resume.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">ATS Score</p>
+                        <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">${resume.atsScore}%</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">AI Score</p>
+                        <p class="text-2xl font-bold text-green-600 dark:text-green-400">${resume.aiScore}%</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Created Date</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(createdAt).toLocaleDateString()}</p>
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">AI Improved Resume Text</p>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <p class="text-sm text-gray-900 dark:text-white">${resume.aiImprovedText}</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">ATS Score</p>
-                    <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">${atsScore}%</p>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">AI Score</p>
-                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">${aiScore}%</p>
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">AI Suggestions</p>
+                    <ul class="space-y-2">
+                        ${resume.suggestions.map((s) => `
+                            <li class="flex items-start space-x-2">
+                                <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                                <span class="text-sm text-gray-900 dark:text-white">${s}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
                 </div>
             </div>
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">AI Improved Resume Text</p>
-                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <p class="text-sm text-gray-900 dark:text-white">${aiImprovedText}</p>
-                </div>
-            </div>
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">AI Suggestions</p>
-                <ul class="space-y-2">
-                    ${safeSuggestions.map((s) => `
-                        <li class="flex items-start space-x-2">
-                            <i class="fas fa-check-circle text-green-500 mt-1"></i>
-                            <span class="text-sm text-gray-900 dark:text-white">${s}</span>
-                        </li>
-                    `).join('')}
-                </ul>
-            </div>
-        </div>
-    `;
-    const actions = `
-        <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-            Close
-        </button>
-    `;
-    const modal = createModal('Resume Analysis Details', content, actions);
-    showModal(modal);
+        `;
+        const actions = `
+            <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                Close
+            </button>
+        `;
+        const modal = createModal('Resume Analysis Details', content, actions);
+        showModal(modal);
+    } catch (err) {
+        console.error('View Resume Details Error:', err)
+    }
 }
 
 // Make viewResumeDetails globally accessible
@@ -585,7 +591,7 @@ async function saveJob(id = null) {
             await axios.put(`http://localhost:3000/admin/jobs/${id}`, { company, position, description, status, link, notes, appliedDate });
             closeModal();
             getJobs();
-          } catch (error) {
+        } catch (error) {
             console.error('Update job error: ', error);
         }
     } else {

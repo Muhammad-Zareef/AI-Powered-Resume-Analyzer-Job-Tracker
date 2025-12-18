@@ -64,6 +64,16 @@ const getResumes = async (req, res) => {
     }
 }
 
+const getResumeById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const resume = await Resume.findById(id);
+        res.status(200).json({ message: "Successfully!", resume });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+}
+
 const filterResumes = async (req, res) => {
     const { search, ats, ai, date } = req.query;
     let query = {};
@@ -237,4 +247,4 @@ const logout = (req, res) => {
     res.json({ message: "Logged out successfully" });
 }
 
-module.exports = { auth, getDashboardStats, getRecentActivity, getResumes, filterResumes, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout };
+module.exports = { auth, getDashboardStats, getRecentActivity, getResumes, getResumeById, filterResumes, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout };

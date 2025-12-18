@@ -9,6 +9,7 @@ let state = {
 document.addEventListener("DOMContentLoaded", function () {
     checkAuth();
     renderHistory();
+    getJobs();
     renderJobs();
 });
 
@@ -19,6 +20,27 @@ async function checkAuth() {
         window.location.href = "/index.html";
         console.log(err);
     }
+}
+
+async function getJobs() {
+    try {
+        const res = await axios.get('http://localhost:3000/api/jobs', { withCredentials: true });
+        renderJobOptions(res.data);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+function renderJobOptions(jobs) {
+    const jobSelect = document.getElementById("jobSelect");
+    jobSelect.innerHTML = '<option value="">Select a job</option>';
+    jobs.forEach(job => {
+        const option = document.createElement("option");
+        option.value = job._id; // important for backend
+        option.textContent = `${job.position} — ${job.company}`;
+        option.dataset.job = JSON.stringify(job); // store full object if needed
+        jobSelect.appendChild(option);
+    });
 }
 
 // Tab Switching
@@ -38,41 +60,30 @@ async function analyzeResume(e) {
     const errorMsg = document.getElementById("errorMsg");
     const errorText = document.getElementById("errorText");
     const fileInput = document.getElementById("fileInput");
-    const textarea = document.getElementById("resumeInput");
+    const jobSelect = document.getElementById("jobSelect");
     const file = fileInput.files[0];
-    const resumeText = textarea.value.trim();
-    const hasFile = !!file;
-    const hasText = resumeText.length > 0;
-
     // Nothing provided
-    if (!hasFile && !hasText) {
-        showError("Please upload a PDF or paste your resume text");
+    if (!file && !jobSelect.value) {
+        showError("Please upload a PDF and select job");
         return;
     }
-
-    // Both provided
-    if (hasFile && hasText) {
-        showError("Please use only one option (PDF or text)");
+    if (!file) {
+        showError("Please upload PDF");
         return;
     }
-
-    // Validate text
-    if (hasText && resumeText.length < 50) {
-        showError("Resume text must be at least 50 characters");
+    if (!jobSelect.value) {
+        showError("Please select a job");
         return;
     }
-
     // Validate PDF
-    if (hasFile) {
+    if (file) {
         const isPdfMime = file.type === "application/pdf";
         const isPdfExt = file.name.toLowerCase().endsWith(".pdf");
-
         if (!isPdfMime || !isPdfExt) {
             showError("Only PDF files are allowed");
             fileInput.value = "";
             return;
         }
-
         // Optional: file size (5MB)
         const MAX_SIZE = 5 * 1024 * 1024;
         if (file.size > MAX_SIZE) {
@@ -81,33 +92,19 @@ async function analyzeResume(e) {
             return;
         }
     }
-
     errorMsg.classList.add("hidden");
-
     // Build FormData
     const formData = new FormData();
-    if (hasFile) formData.append("resume", file);
-    if (hasText) formData.append("resumeText", resumeText);
-
+    formData.append("resume", file);
+    formData.append("jobId", jobSelect.value);
     // UI loading state
     const btn = document.getElementById("analyzeBtn");
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
     try {
-        const res = await axios.post('http://localhost:3000/api/resume/analyze', formData , {
-            withCredentials: true
-        });
-        console.log(res)
-        const aiData = res.data.newResume;
+        const res = await axios.post('http://localhost:3000/api/resume/analyze', formData , { withCredentials: true });
         setTimeout(() => {
-            const mockResponse = {
-                aiScore: aiData.aiScore,
-                atsScore: aiData.atsScore,
-                suggestions: aiData.suggestions,
-                aiImprovedText: aiData.aiImprovedText,
-                createdAt: aiData.createdAt,
-            };
-            displayResults(mockResponse);
+            displayResults(res.data.newResume);
             renderHistory();
             document.getElementById("analyzeBtn").disabled = false;
             document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
@@ -131,12 +128,23 @@ function showError(message) {
 function displayResults(data) {
     const overallDash = (data.aiScore / 100) * 283;
     const atsDash = (data.aiScore / 100) * 283;
+    const jobMatchDash = (data.jobMatchPercentage / 100) * 283;
     document.getElementById("scoreValue").textContent = data.aiScore;
     document.getElementById("atsScoreValue").textContent = data.atsScore;
+    document.getElementById("jobMatchValue").textContent = data.jobMatchPercentage;
     document.getElementById("overallCircle").setAttribute("stroke-dasharray", `${overallDash} 283`);
     document.getElementById("atsCircle").setAttribute("stroke-dasharray", `${atsDash} 283`);
+    document.getElementById("jobMatchCircle").setAttribute("stroke-dasharray", `${jobMatchDash} 283`);
     document.getElementById("scoreStatus").innerHTML = data.aiScore >= 80 ? '<i class="fas fa-check-circle mr-1"></i>Excellent' : '<i class="fas fa-alert mr-1"></i>Good';
     document.getElementById("atsStatus").innerHTML = data.atsScore >= 75 ? '<i class="fas fa-thumbs-up mr-1"></i>Optimized' : '<i class="fas fa-wrench mr-1"></i>Needs Work';
+    document.getElementById("jobMatchStatus").innerHTML = data.jobMatchPercentage >= 75 ? '<i class="fas fa-thumbs-up mr-1"></i>Optimized' : '<i class="fas fa-wrench mr-1"></i>Needs Work';
+    const missingSkillsHtml = data.missingSkills.map((s, i) => `
+                <li class="p-3 rounded-lg border-l-4 flex gap-3" style="background-color: var(--light-bg); border-color: var(--primary);">
+                    <div class="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0" style="background-color: var(--primary);">${i + 1}</div>
+                    <span style="color: var(--dark-text);">${s}</span>
+                </li>
+            `
+        ).join("");
     const suggestionsHtml = data.suggestions.map((s, i) => `
                 <li class="p-3 rounded-lg border-l-4 flex gap-3" style="background-color: var(--light-bg); border-color: var(--primary);">
                     <div class="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0" style="background-color: var(--primary);">${i + 1}</div>
@@ -144,8 +152,10 @@ function displayResults(data) {
                 </li>
             `
         ).join("");
+    document.getElementById("missingSkillsContainer").innerHTML = missingSkillsHtml;
     document.getElementById("suggestionsContainer").innerHTML = suggestionsHtml;
-    document.getElementById("grammarContainer").textContent = data.aiImprovedText;
+    const html = data.aiImprovedText.replace(/\n{2,}/g, "</p><p>").replace(/\* (.+)/g, "<li>$1</li>").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\|/g, " | ");
+    document.getElementById("grammarContainer").innerHTML = html;
     document.getElementById("analysisTime").textContent = `Analyzed on ${new Date(data.createdAt).toLocaleDateString()}`;
     document.getElementById("resultsSection").classList.remove("hidden-section");
     document.getElementById("resultsSection").classList.add("visible-section");
@@ -174,6 +184,10 @@ async function addJob(e) {
             });
             return;
         }
+        if (description.length < 50) {
+            alert("Resume text must be at least 50 characters");
+            return;
+        }
         const job = {
             company,
             position,
@@ -194,6 +208,7 @@ async function addJob(e) {
         document.getElementById("jobForm").reset();
         renderJobs();
         toggleJobForm();
+        getJobs();
     } catch (error) {
         console.log(error);
     }
@@ -220,6 +235,7 @@ async function deleteJob(id) {
                     timer: 2000
                 });
                 renderJobs();
+                getJobs();
             }
         });
     } catch (error) {
@@ -277,7 +293,7 @@ function getJobCard(job) {
                             ${job.link ? `<a href="${job.link}" target="_blank" rel="noopener noreferrer" style="color: var(--primary);" class="hover:underline"><i class="fas fa-external-link-alt mr-1"></i>View Posting</a>` : ""}
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="openEditModal('${job._id}', '${job.company}', '${job.position}', '${job.description}', '${job.status}', '${job.link}', '${job.notes}')" class="transition-colors" style="color: var(--primary);" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button onclick="openEditModal('${job._id}')" class="transition-colors" style="color: var(--primary);" title="Edit"><i class="fas fa-edit"></i></button>
                             <button onclick="deleteJob('${job._id}')" class="transition-colors" style="color: #c62828;" title="Delete"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
@@ -285,15 +301,21 @@ function getJobCard(job) {
             `;
 }
 
-function openEditModal(jobId, company, position, description, status, link, notes) {
-    document.getElementById("jobId").value = jobId;
-    document.getElementById("editJobCompany").value = company;
-    document.getElementById("editJobPosition").value = position;
-    document.getElementById("editJobDescription").value = description;
-    document.getElementById("editJobStatus").value = status;
-    document.getElementById("editJobLink").value = link || "";
-    document.getElementById("editJobNotes").value = notes || "";
-    document.getElementById("editJobModal").classList.remove("hidden");
+async function openEditModal(jobId) {
+    try {
+        const res = await axios.get(`http://localhost:3000/api/jobs/${jobId}`, { withCredentials: true });
+        const job = res.data.job;
+        document.getElementById("jobId").value = jobId;
+        document.getElementById("editJobCompany").value = job.company;
+        document.getElementById("editJobPosition").value = job.position;
+        document.getElementById("editJobDescription").value = job.description;
+        document.getElementById("editJobStatus").value = job.status;
+        document.getElementById("editJobLink").value = job.link || "";
+        document.getElementById("editJobNotes").value = job.notes || "";
+        document.getElementById("editJobModal").classList.remove("hidden");
+    } catch (err) {
+        console.error('Edit Job Error:', err);
+    }
 }
 
 function closeEditModal() {
@@ -329,6 +351,7 @@ async function saveJobEdit(e) {
         });
         closeEditModal();
         renderJobs();
+        getJobs();
     } catch (error) {
         console.log(error);
     }
@@ -371,19 +394,8 @@ async function viewHistory(id) {
     try {
         const res = await axios.get('http://localhost:3000/api/resume/', { withCredentials: true });
         const item = res.data.find((h) => h._id === id);
-        if (item) {
-            if (item.originalText.length > 50) {
-                document.getElementById("resumeInput").value = item.originalText;
-                const fileInput = document.getElementById("fileInput");
-                fileInput.disabled = true;
-                fileInput.value = "";
-                hideFileName();
-            } else {
-                showFileName("", item.originalText);
-            }
-            displayResults(item);
-            switchTab("analyzer");
-        }
+        displayResults(item);
+        switchTab("analyzer");
     } catch (err) {
         console.log(err);
     }
@@ -445,44 +457,10 @@ function clearAllHistory() {
     }
 }
 
-function handleTextareaInput(textarea) {
-    const fileInput = document.getElementById("fileInput");
-    if (textarea.value.trim().length > 0) {
-        fileInput.disabled = true;
-        fileInput.value = ""; // clear file if any
-        hideFileName();
-    } else {
-        fileInput.disabled = false;
-    }
-}
-
-function handleFileChange(input) {
+function showFileName(input) {
     const fileNameEl = document.getElementById("fileName");
-    const textarea = document.getElementById("resumeInput");
-    if (input.files.length > 0) {
-        textarea.disabled = true;
-        textarea.disabled = true;
-        fileNameEl.textContent = `Selected file: ${input.files[0].name}`;
-        fileNameEl.classList.remove("hidden");
-    } else {
-        textarea.disabled = false;
-        hideFileName();
-    }
-}
-
-function showFileName(input, name) {
-    const textarea = document.getElementById("resumeInput");
-    const fileNameEl = document.getElementById("fileName");
-    if (name) {
-        textarea.value = "";
-        textarea.disabled = true;
-        fileNameEl.textContent = `Selected file: ${name}`;
-        fileNameEl.classList.remove("hidden");
-    } else {
-        textarea.disabled = false;
-        fileNameEl.textContent = `Selected file: ${input.files[0].name? input.files[0].name : name}`;
-        fileNameEl.classList.remove("hidden");
-    }
+    fileNameEl.textContent = `Selected file: ${input.files[0].name}`;
+    fileNameEl.classList.remove("hidden");
 }
 
 function hideFileName() {

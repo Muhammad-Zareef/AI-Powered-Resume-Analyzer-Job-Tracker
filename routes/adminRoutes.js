@@ -3,13 +3,14 @@ const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middlewares/verifyToken');
 const verifyAdmin = require('../middlewares/verifyAdmin');
-const { auth, getDashboardStats, getRecentActivity, getResumes, filterResumes, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout } = require('../controllers/adminController');
+const { auth, getDashboardStats, getRecentActivity, getResumes, getResumeById, filterResumes, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout } = require('../controllers/adminController');
 
-router.use(verifyToken, verifyAdmin);
-router.get("/dashboard", auth);
+// router.use(verifyToken, verifyAdmin);
+router.get("/dashboard", verifyToken, verifyAdmin, auth);
 router.get("/dashboard-stats", getDashboardStats);
 router.get("/recent-activity", getRecentActivity);
 router.get('/resumes', getResumes);
+router.get('/resumes/:id', getResumeById);
 router.get('/resumes/filter', filterResumes);
 router.get('/jobs', getJobs);
 router.get('/jobs/:id', getJobById);

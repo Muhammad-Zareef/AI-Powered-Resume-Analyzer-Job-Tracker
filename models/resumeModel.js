@@ -29,6 +29,14 @@ const ResumeSchema = new Schema({
         type: Number,
         default: 0,
     },
+    jobMatchPercentage: {
+        type: Number,
+        default: 0,
+    },
+    missingSkills: {
+        type: [String],
+        default: [],
+    },
     suggestions: {
         type: [String],
         default: [],

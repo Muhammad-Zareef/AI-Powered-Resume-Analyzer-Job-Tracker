@@ -1,6 +1,8 @@
 
-const fs = require('fs');
+const path = require('path');
+const pdfjsLib = require("pdfjs-dist/legacy/build/pdf.js");
 const { response, json } = require('express');
+const Job = require('../models/jobModel');
 const Resume = require('../models/resumeModel');
 const { GoogleGenAI } = require("@google/genai");
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
@@ -21,103 +23,102 @@ const getResumes = async (req, res) => {
     }
 }
 
+pdfjsLib.GlobalWorkerOptions.workerSrc = path.join(__dirname, "../node_modules/pdfjs-dist/legacy/build/pdf.worker.js");
+
+async function extractTextFromBuffer(buffer) {
+    const uint8 = new Uint8Array(buffer);
+    const loadingTask = pdfjsLib.getDocument({ data: uint8 });
+    const pdf = await loadingTask.promise;
+    let fullText = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const strings = content.items.map((it) => it.str);
+        fullText += strings.join(" ") + "\n\n";
+    }
+    return fullText.trim();
+}
+
+function safeJsonParse(aiResponse) {
+    const cleaned = aiResponse.replace(/```json\s*/i, "").replace(/```$/, "").trim();
+    return JSON.parse(cleaned);
+}
+
 const analyzeResume = async (req, res) => {
-    const { user } = req.user;
     try {
-        if (req.files && req.files.resume) {
-            console.log("PDF uploaded:", req.files.resume.name);
-            // PDF flow
-            const pdfBuffer = req.files.resume.data;
-            const promptPDF = `
-                You are a resume analysis engine. I am giving you a document to analyze. Analyze the resume content in the document and RETURN ONLY VALID JSON.
-                Do NOT include explanations, markdown, comments, or any extra text.
-        
-                Return JSON in exactly this structure without markdown fences:
-                {
-                    "resumeScore": number,
-                    "atsScore": number,
-                    "suggestions": ["string", "string", ...],
-                    "correctedVersion": "string"
-                }
-        
-                Rules:
-                - "resumeScore" must be a number between 0 and 100.
-                - "atsScore" must be a number between 0 and 100.
-                - "suggestions" must be a list of short, clear, actionable bullet points.
-                - "correctedVersion" must be a clean, professionally rewritten version of the resume.
-                - Do NOT escape newlines manually — valid JSON should handle this automatically.
-                - Do NOT return anything outside the JSON object.
-            `;
-            const contents = [
-                { text: promptPDF },
-                {
-                    inlineData: {
-                        mimeType: 'application/pdf',
-                        data: pdfBuffer.toString("base64")
-                    }
-                }
-            ];
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: contents,
-            });
-            const aiData = JSON.parse(response.text);
-            const newResume = new Resume({
-                userId: user.id,
-                userName: user.name,
-                originalText: req.files.resume.name,
-                aiImprovedText: aiData.correctedVersion,
-                aiScore: aiData.resumeScore,
-                atsScore: aiData.atsScore,
-                suggestions: aiData.suggestions
-            });
-            await newResume.save();
-            res.status(200).send({ status: 200, newResume, message: "Response generated successfully" });
-        } else if (req.body.resumeText) {
-            console.log("Text received:", req.body.resumeText);
-            // TEXT flow
-            const { resumeText } = req.body;
-            const prompt = `
-                You are a resume analysis engine. Analyze the resume text below and RETURN ONLY VALID JSON.
-                Do NOT include explanations, markdown, comments, or extra text.
-                Return JSON in exactly this structure without markdown fences:
-                {
-                    "resumeScore": number,
-                    "atsScore": number,
-                    "suggestions": [ "string", "string", ... ],
-                    "correctedVersion": "string"
-                }
-                Rules:
-                    - "resumeScore" must be between 0–100
-                    - "atsScore" must be between 0–100
-                    - "suggestions" must be a list of short, clear bullet-point suggestions
-                    - "correctedVersion" must be a clean, professionally rewritten version of the resume
-                    - Do NOT escape newlines manually — the model should return valid JSON automatically
-                    - Do NOT return anything outside the JSON object
-                Resume to analyze:
-                """
+        const { user } = req.user;
+        const { jobId } = req.body;
+        const job = await Job.findById(jobId);
+        console.log("PDF uploaded:", req.files.resume.name);
+        // PDF flow
+        const pdfBuffer = req.files.resume.data;
+        const resumeText = await extractTextFromBuffer(pdfBuffer);
+        console.log(resumeText);
+        const prompt = `
+            You are a resume–job matching and analysis engine.
+            You will be given:
+            1) Resume text
+            2) A Job object in JSON containing: companyName, position, description, and status
+
+            Analyze the resume text and match it specifically against the provided job.
+            RETURN ONLY VALID JSON.
+            Do NOT include explanations, markdown, comments, or extra text.
+            Return JSON in exactly this structure without markdown fences:
+            {
+                "resumeScore": number,
+                "atsScore": number,
+                "jobMatchPercentage": number,
+                "missingSkills": ["string", "string", ...],
+                "suggestions": ["string", "string", ...],
+                "correctedVersion": "string"
+            }
+
+            Rules:
+            - "resumeScore" must be between 0 and 100 and represent overall resume quality
+            - "atsScore" must be between 0 and 100 and represent ATS compatibility
+            - "jobMatchPercentage" must be between 0 and 100 and represent how well the resume matches the provided job description
+            - "missingSkills" must list key skills required by the provided job description that are missing or weak in the resume
+            - "suggestions" must be short, clear, actionable bullet-point improvements tailored to the provided job
+            - "correctedVersion" must be a clean, professionally rewritten, ATS-optimized version of the resume tailored to the provided job
+            - Do NOT escape newlines manually — return valid JSON automatically
+            - Do NOT return anything outside the JSON object
+
+            Input:
+            {
+                "resumeText": """
                 ${resumeText}
-                """
-            `;
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: prompt,
-            });
-            const aiData = JSON.parse(response.text);
-            const newResume = new Resume({
-                userId: user.id,
-                userName: user.name,
-                originalText: resumeText,
-                aiImprovedText: aiData.correctedVersion,
-                aiScore: aiData.resumeScore,
-                atsScore: aiData.atsScore,
-                suggestions: aiData.suggestions
-            });
-            await newResume.save();
-            res.status(200).send({ status: 200, newResume, message: "Response generated successfully" });
-        } else {
-            return res.status(400).json({ error: "No resume provided" });
-        }
+                """,
+                "job": {
+                    "companyName": "${job.company}",
+                    "position": "${job.position}",
+                    "description": """
+                    ${job.description}
+                    """,
+                    "status": "open"
+                }
+            }
+        `;
+        console.log(prompt);
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+        console.log(response.text);
+        const aiData = safeJsonParse(response.text);
+        console.log(aiData)
+        const newResume = new Resume({
+            userId: user.id,
+            userName: user.name,
+            originalText: resumeText,
+            aiImprovedText: aiData.correctedVersion,
+            aiScore: aiData.resumeScore,
+            atsScore: aiData.atsScore,
+            jobMatchPercentage: aiData.jobMatchPercentage,
+            missingSkills: aiData.missingSkills,
+            suggestions: aiData.suggestions
+        });
+        await newResume.save();
+        res.status(200).send({ status: 200, newResume, message: "Response generated successfully" });
     } catch (err) {
         res.status(500).json({ status: 500, success: false, message: "Internal Server Error", });
     }

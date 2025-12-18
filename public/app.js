@@ -10,7 +10,7 @@ async function checkAuth() {
         if (res.data.user.role === "admin") {
             window.location.href = "dashboard/index.html";
         } else {
-            window.location.href = "home/home.html";
+            window.location.href = "home/index.html";
         }
     } catch (err) {
 
