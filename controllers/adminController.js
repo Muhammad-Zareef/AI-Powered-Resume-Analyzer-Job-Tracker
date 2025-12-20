@@ -57,7 +57,7 @@ const getRecentActivity = async (req, res) => {
 
 const getResumes = async (req, res) => {
     try {
-        const resumes = await Resume.find();
+        const resumes = await Resume.find().sort({ createdAt: -1 });
         res.status(200).json(resumes);
     } catch (err) {
         res.status(500).json({ success: false, message: "Internal Server Error" });

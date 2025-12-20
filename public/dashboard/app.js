@@ -334,16 +334,16 @@ async function viewResumeDetails(id) {
                         <p class="text-base font-semibold text-gray-900 dark:text-white">${resume.userName}</p>
                     </div>
                     <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Created Date</p>
-                        <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(resume.createdAt).toLocaleDateString()}</p>
-                    </div>
-                    <div>
                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400">ATS Score</p>
                         <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">${resume.atsScore}%</p>
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400">AI Score</p>
                         <p class="text-2xl font-bold text-green-600 dark:text-green-400">${resume.aiScore}%</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Job Match</p>
+                        <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">${resume.jobMatchPercentage}%</p>
                     </div>
                 </div>
                 <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -358,6 +358,17 @@ async function viewResumeDetails(id) {
                         ${resume.suggestions.map((s) => `
                             <li class="flex items-start space-x-2">
                                 <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                                <span class="text-sm text-gray-900 dark:text-white">${s}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Missing Skills</p>
+                    <ul class="space-y-2">
+                        ${resume.missingSkills.map((s) => `
+                            <li class="flex items-start space-x-2">
+                                <i class="fas fa-exclamation-circle text-red-500 mt-1"></i>
                                 <span class="text-sm text-gray-900 dark:text-white">${s}</span>
                             </li>
                         `).join('')}
@@ -453,7 +464,7 @@ function renderJobTable(jobs = []) {
                 ${new Date(job.appliedDate).toLocaleDateString()}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button onclick="viewJobDetails('${job.company}', '${job.position}', '${job.description}', '${job.status}', '${job.link}', '${job.notes}', '${job.appliedDate}', '${job._id}')" 
+                <button onclick="viewJobDetails('${job._id}')" 
                 class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View">
                     <i class="fas fa-eye"></i>
                 </button>
@@ -469,52 +480,58 @@ function renderJobTable(jobs = []) {
     });
 }
 
-function viewJobDetails(company, position, description, status, jobLink, notes, appliedDate) {
-    const content = `
-        <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Company</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${company}</p>
+async function viewJobDetails(jobId) {
+    try {
+        const res = await axios.get(`http://localhost:3000/admin/jobs/${jobId}`, { withCredentials: true });
+        const job = res.data.job;
+        const content = `
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Company</p>
+                        <p class="text-base font-semibold text-gray-900 dark:text-white">${job.company}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Position</p>
+                        <p class="text-base font-semibold text-gray-900 dark:text-white">${job.position}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</p>
+                        <p class="text-base font-semibold text-gray-900 dark:text-white">${job.status}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Applied Date</p>
+                        <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(job.appliedDate).toLocaleDateString()}</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Position</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${position}</p>
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Job Description</p>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <p class="text-sm text-gray-900 dark:text-white">${job.description}</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${status}</p>
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Job Link</p>
+                    <a href="${job.link}" target="_blank" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">${job.link}</a>
                 </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Applied Date</p>
-                    <p class="text-base font-semibold text-gray-900 dark:text-white">${new Date(appliedDate).toLocaleDateString()}</p>
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Notes</p>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <p class="text-sm text-gray-900 dark:text-white">${job.notes}</p>
+                    </div>
                 </div>
             </div>
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Job Description</p>
-                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <p class="text-sm text-gray-900 dark:text-white">${description}</p>
-                </div>
-            </div>
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Job Link</p>
-                <a href="${jobLink}" target="_blank" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">${jobLink}</a>
-            </div>
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Notes</p>
-                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <p class="text-sm text-gray-900 dark:text-white">${notes}</p>
-                </div>
-            </div>
-        </div>
-    `;
-    const actions = `
-        <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-            Close
-        </button>
-    `;
-    const modal = createModal('Job Details', content, actions);
-    showModal(modal);
+        `;
+        const actions = `
+            <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                Close
+            </button>
+        `;
+        const modal = createModal('Job Details', content, actions);
+        showModal(modal);
+    } catch (err) {
+        console.error('Get Job Error:', err);
+    }
 }
 
 function createJobForm(job = null) {
@@ -609,7 +626,7 @@ async function saveJob(id = null) {
 
 async function editJob(id) {
     try {
-        const res = await axios.get(`http://localhost:3000/admin/getJob/${id}`, { withCredentials: true });
+        const res = await axios.get(`http://localhost:3000/admin/jobs/${id}`, { withCredentials: true });
         createJobForm(res.data.job);
     } catch (err) {
         console.error('Edit job error:', err);
