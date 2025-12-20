@@ -109,6 +109,7 @@ const analyzeResume = async (req, res) => {
         const newResume = new Resume({
             userId: user.id,
             userName: user.name,
+            userEmail: user.email,
             originalText: resumeText,
             aiImprovedText: aiData.correctedVersion,
             aiScore: aiData.resumeScore,

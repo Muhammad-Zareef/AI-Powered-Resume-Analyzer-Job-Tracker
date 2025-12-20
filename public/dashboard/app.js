@@ -411,7 +411,8 @@ async function initResumeFilters() {
         try {
             const query = new URLSearchParams({ search, ats, ai, date }).toString();
             const res = await axios.get(`http://localhost:3000/admin/resumes/filter?${query}`, { withCredentials: true });
-            // renderResumeTable(data.resumes); // pass backend data
+            console.log(res);
+            renderResumeTable(res.data.resumes); // pass backend data
         } catch (error) {
             console.error('Failed to fetch resumes:', error);
         }
@@ -615,7 +616,7 @@ async function saveJob(id = null) {
         // Create new job
         const newJob = { company, position, description, status, appliedDate, link, notes };
         try {
-            await axios.post('http://localhost:3000/admin/jobs', newJob);
+            await axios.post('http://localhost:3000/admin/jobs', newJob, { withCredentials: true });
             closeModal();
             getJobs();
         } catch (err) {
@@ -699,7 +700,7 @@ async function initJobManagement() {
             params.append('company', companyFilter.value.trim());
         }
         try {
-            const res = await axios.get(`http://localhost:3000/admin/jobs/filter?${params.toString()}`);
+            const res = await axios.get(`http://localhost:3000/admin/jobs/filter?${params.toString()}`, { withCredentials: true });
             if (res.data.success) renderJobTable(res.data.jobs);
         } catch (err) {
             console.error('Job Filter Error:', err);

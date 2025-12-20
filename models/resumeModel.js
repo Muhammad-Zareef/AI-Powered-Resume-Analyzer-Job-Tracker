@@ -11,6 +11,10 @@ const ResumeSchema = new Schema({
         type: String,
         required: true,
     },
+    userEmail: {
+        type: String,
+        required: true,
+    },
     originalText: {
         type: String,
         required: true,
