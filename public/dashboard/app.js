@@ -315,6 +315,9 @@ function renderResumeTable(resumes) {
                 class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-3" title="View Details">
                     <i class="fas fa-eye"></i>
                 </button>
+                <button onclick="deleteResume('${resume._id}', '${resume.userName}')" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
             </td>
         `;
         tbody.appendChild(row);
@@ -324,7 +327,6 @@ function renderResumeTable(resumes) {
 async function viewResumeDetails(id) {
     try {
         const res = await axios.get(`http://localhost:3000/admin/resumes/${id}`, { withCredentials: true });
-        console.log(res)
         const resume = res.data.resume;
         const content = `
             <div class="space-y-4">
@@ -388,8 +390,43 @@ async function viewResumeDetails(id) {
     }
 }
 
-// Make viewResumeDetails globally accessible
+function deleteResume(id, userName) {
+    const content = `
+        <div class="text-center py-4">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-xl"></i>
+            </div>
+            <p class="text-base text-gray-900 dark:text-white">Are you sure you want to delete this resume?</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Resume of ${userName}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">This action cannot be undone.</p>
+        </div>
+    `;
+    const actions = `
+        <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+            Cancel
+        </button>
+        <button onclick="confirmDeleteResume('${id}')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+            Delete
+        </button>
+    `;
+    const modal = createModal('Confirm Delete', content, actions);
+    showModal(modal);
+}
+
+async function confirmDeleteResume(id) {
+    try {
+        await axios.delete(`http://localhost:3000/admin/resumes/${id}`);
+        closeModal();
+        getResumes();
+    } catch (err) {
+        console.error('Delete resume error:', err);
+    }
+}
+
+// Make Resume functions globally accessible
 window.viewResumeDetails = viewResumeDetails;
+window.deleteResume = deleteResume;
+window.confirmDeleteResume = confirmDeleteResume;
 
 async function initResumeFilters() {
     const searchInput = document.getElementById('resumeSearch');
@@ -411,7 +448,6 @@ async function initResumeFilters() {
         try {
             const query = new URLSearchParams({ search, ats, ai, date }).toString();
             const res = await axios.get(`http://localhost:3000/admin/resumes/filter?${query}`, { withCredentials: true });
-            console.log(res);
             renderResumeTable(res.data.resumes); // pass backend data
         } catch (error) {
             console.error('Failed to fetch resumes:', error);
@@ -846,7 +882,7 @@ async function editUser(id) {
 
 async function deleteUser(id) {
     try {
-        const res = await axios.get(`http://localhost:3000/admin/getUser/${id}`, { withCredentials: true });
+        const res = await axios.get(`http://localhost:3000/admin/users/${id}`, { withCredentials: true });
         const user = res.data.user;
         const content = `
             <div class="text-center py-4">

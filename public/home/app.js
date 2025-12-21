@@ -18,7 +18,7 @@ async function checkAuth() {
         await axios.get("http://localhost:3000/api/resume/auth", { withCredentials: true });
     } catch (err) {
         window.location.href = "/index.html";
-        console.log(err);
+        console.error('Authorization Error:', err);
     }
 }
 
@@ -27,7 +27,7 @@ async function getJobs() {
         const res = await axios.get('http://localhost:3000/api/jobs', { withCredentials: true });
         renderJobOptions(res.data);
     } catch (err) {
-        console.log(err);
+        console.error('Get job error:', err);
     }
 }
 
@@ -64,7 +64,7 @@ async function analyzeResume(e) {
     const file = fileInput.files[0];
     // Nothing provided
     if (!file && !jobSelect.value) {
-        showError("Please upload a PDF and select job");
+        showError("Please upload a PDF and select a job");
         return;
     }
     if (!file) {
@@ -113,7 +113,7 @@ async function analyzeResume(e) {
         document.getElementById("analyzeBtn").disabled = false;
         document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
         showError("Internal Server Error");
-        console.log(err);
+        console.error('Resume Analyzed Error:', err);
     }
 }
 
@@ -154,7 +154,7 @@ function displayResults(data) {
         ).join("");
     document.getElementById("missingSkillsContainer").innerHTML = missingSkillsHtml;
     document.getElementById("suggestionsContainer").innerHTML = suggestionsHtml;
-    const html = data.aiImprovedText.replace(/\n{2,}/g, "</p><p>").replace(/\* (.+)/g, "<li>$1</li>").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\|/g, " | ");
+    const html = `<p>${data.aiImprovedText.replace(/\n{2,}/g, "</p><p>").replace(/\* /g, "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\|/g, " | ")}</p>`;
     document.getElementById("grammarContainer").innerHTML = html;
     document.getElementById("analysisTime").textContent = `Analyzed on ${new Date(data.createdAt).toLocaleDateString()}`;
     document.getElementById("resultsSection").classList.remove("hidden-section");
@@ -210,7 +210,7 @@ async function addJob(e) {
         toggleJobForm();
         getJobs();
     } catch (error) {
-        console.log(error);
+        console.error('Add job error:', error);
     }
 }
 
@@ -239,7 +239,7 @@ async function deleteJob(id) {
             }
         });
     } catch (error) {
-        console.log(error);
+        console.error('Delete job error:', error);
     }
 }
 
@@ -262,7 +262,7 @@ async function renderJobs() {
         document.getElementById("jobCount").textContent = res.data.length;
         document.getElementById("jobCount").style.display = res.data.length > 0 ? "inline-block" : "none";
     } catch (error) {
-        console.log(error);
+        console.error('Render job error:', error);
     }
 }
 
@@ -353,7 +353,7 @@ async function saveJobEdit(e) {
         renderJobs();
         getJobs();
     } catch (error) {
-        console.log(error);
+        console.error('Saving job error:', error);
     }
 }
 
@@ -386,7 +386,7 @@ async function renderHistory() {
         document.getElementById("historyContent").innerHTML = html;
         document.getElementById("historyClearBtn").classList.toggle("hidden", res.data.length === 0);
     } catch (err) {
-        console.log(err);
+        console.error('Render History Error:', err);
     }
 }
 
@@ -397,7 +397,7 @@ async function viewHistory(id) {
         displayResults(item);
         switchTab("analyzer");
     } catch (err) {
-        console.log(err);
+        console.error('Get Resume Error:', err);
     }
 }
 
@@ -425,7 +425,7 @@ function deleteHistory(id) {
             }
         });
     } catch (error) {
-        console.log(error);
+        console.error('Delete history error:', error);
     }
 }
 
@@ -453,7 +453,7 @@ function clearAllHistory() {
             }
         });
     } catch (error) {
-        console.log(error);
+        console.error('Clear all history error:', error);
     }
 }
 
@@ -482,6 +482,6 @@ const logout = async () => {
             window.location.href = "/index.html";
         }, 1000);
     } catch (err) {
-        console.log(err);
+        console.error('Logout Error:', err);
     }
 }

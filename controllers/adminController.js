@@ -107,6 +107,16 @@ const filterResumes = async (req, res) => {
     }
 }
 
+const deleteResume = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedResume = await Resume.findByIdAndDelete(id);
+        res.status(200).json({ message: "Resume deleted successfully", deletedResume });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+}
+
 const getJobs = async (req, res) => {
     try {
         const jobs = await Job.find().sort({ createdAt: -1 });
@@ -247,4 +257,4 @@ const logout = (req, res) => {
     res.json({ message: "Logged out successfully" });
 }
 
-module.exports = { auth, getDashboardStats, getRecentActivity, getResumes, getResumeById, filterResumes, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout };
+module.exports = { auth, getDashboardStats, getRecentActivity, getResumes, getResumeById, filterResumes, deleteResume, getJobs, filterJobs, getJobById, addJob, updateJob, deleteJob, getUsers, getUserById, addUser, updateUser, deleteUser, logout };

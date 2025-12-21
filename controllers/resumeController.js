@@ -111,13 +111,14 @@ const analyzeResume = async (req, res) => {
             userName: user.name,
             userEmail: user.email,
             originalText: resumeText,
-            aiImprovedText: aiData.correctedVersion,
+            aiImprovedText: aiData.correctedVersion.replace(/\n{2,}/g, "</p><p>").replace(/\* /g, "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\|/g, " | "),
             aiScore: aiData.resumeScore,
             atsScore: aiData.atsScore,
             jobMatchPercentage: aiData.jobMatchPercentage,
             missingSkills: aiData.missingSkills,
             suggestions: aiData.suggestions
         });
+        console.log(newResume.aiImprovedText);
         await newResume.save();
         res.status(200).send({ status: 200, newResume, message: "Response generated successfully" });
     } catch (err) {
