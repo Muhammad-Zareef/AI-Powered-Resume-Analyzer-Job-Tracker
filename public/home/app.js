@@ -414,7 +414,13 @@ async function saveJobEdit(e) {
 
 // History Management
 function toggleHistory() {
-    document.getElementById("historySidebar").classList.toggle("hidden", window.innerWidth < 768);
+    const sidebar = document.getElementById('historySidebar');
+    const overlay = document.getElementById('historyOverlay');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+    // Prevent body scroll when sidebar is open on mobile
+    document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+    // document.getElementById("historySidebar").classList.toggle("hidden", window.innerWidth < 768);
 }
 
 async function renderHistory() {
