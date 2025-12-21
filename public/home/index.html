@@ -126,7 +126,7 @@
                                             <circle id="overallCircle" cx="50" cy="50" r="45" stroke="var(--primary)" stroke-width="8" fill="none" stroke-dasharray="283 283" stroke-linecap="round"/>
                                         </svg>
                                         <div class="absolute inset-0 flex items-center justify-center">
-                                            <span id="scoreValue" class="text-2xl font-bold" style="color: var(--dark-text);">82</span>
+                                            <span id="scoreValue" class="text-2xl font-bold" style="color: var(--dark-text);"></span>
                                         </div>
                                     </div>
                                     <div>
@@ -148,7 +148,7 @@
                                             <circle id="atsCircle" cx="50" cy="50" r="45" stroke="var(--accent)" stroke-width="8" fill="none" stroke-dasharray="283 283" stroke-linecap="round"/>
                                         </svg>
                                         <div class="absolute inset-0 flex items-center justify-center">
-                                            <span id="atsScoreValue" class="text-2xl font-bold" style="color: var(--dark-text);">75</span>
+                                            <span id="atsScoreValue" class="text-2xl font-bold" style="color: var(--dark-text);"></span>
                                         </div>
                                     </div>
                                     <div>
@@ -170,7 +170,7 @@
                                             <circle id="jobMatchCircle" cx="50" cy="50" r="45" stroke="var(--primary)" stroke-width="8" fill="none" stroke-dasharray="283 283" stroke-linecap="round"/>
                                         </svg>
                                         <div class="absolute inset-0 flex items-center justify-center">
-                                            <span id="jobMatchValue" class="text-2xl font-bold" style="color: var(--dark-text);">72</span>
+                                            <span id="jobMatchValue" class="text-2xl font-bold" style="color: var(--dark-text);"></span>
                                         </div>
                                     </div>
                                     <div>
@@ -192,7 +192,20 @@
                         </div>
                         <!-- Grammar Fixes -->
                         <div class="bg-white rounded-lg border p-6 fade-in" style="border-color: var(--border);">
-                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2" style="color: var(--dark-text);"><i class="fas fa-spell-check" style="color: var(--accent);"></i>Professional Summary Fix</h3>
+                            <h3 class="text-lg font-semibold mb-4 flex items-center justify-between" style="color: var(--dark-text);">
+                                <span class="flex items-center gap-2"><i class="fas fa-spell-check" style="color: var(--accent);"></i>Professional Summary Fix</span>
+                                <!-- Action Buttons -->
+                                <div class="flex items-center gap-3">
+                                    <!-- Copy Button -->
+                                    <button onclick="copyGrammarText()" class="text-sm hover:opacity-80" title="Copy text">
+                                        <i id="copyIcon" class="fas fa-copy" style="color: var(--secondary);"></i>
+                                    </button>
+                                    <!-- Download Button -->
+                                    <button onclick="downloadGrammarText(this)" class="text-sm hover:opacity-80" title="Download file">
+                                        <i class="fas fa-download hover:text-green-600" style="color: var(--secondary);"></i>
+                                    </button>
+                                </div>
+                            </h3>
                             <p class="text-sm mb-3" style="color: var(--secondary);">Here's an improved version of your professional summary:</p>
                             <div id="grammarContainer" class="rounded-lg p-4 italic" style="background-color: var(--light-bg); border: 1px solid var(--border); color: var(--dark-text);"></div>
                         </div>

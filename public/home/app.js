@@ -154,12 +154,67 @@ function displayResults(data) {
         ).join("");
     document.getElementById("missingSkillsContainer").innerHTML = missingSkillsHtml;
     document.getElementById("suggestionsContainer").innerHTML = suggestionsHtml;
-    const html = `<p>${data.aiImprovedText.replace(/\n{2,}/g, "</p><p>").replace(/\* /g, "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\|/g, " | ")}</p>`;
+    const html = data.aiImprovedText.replace(/\n/g, "<br>");
     document.getElementById("grammarContainer").innerHTML = html;
     document.getElementById("analysisTime").textContent = `Analyzed on ${new Date(data.createdAt).toLocaleDateString()}`;
     document.getElementById("resultsSection").classList.remove("hidden-section");
     document.getElementById("resultsSection").classList.add("visible-section");
     setTimeout(() => document.getElementById("resultsSection").scrollIntoView({ behavior: "smooth" }), 100);
+}
+
+// Copy text
+function copyGrammarText() {
+    const text = document.getElementById("grammarContainer").innerText;
+    const icon = document.getElementById("copyIcon");
+    if (!text.trim()) return;
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            // Change icon to check
+            icon.classList.remove("fa-copy");
+            icon.classList.add("fa-check");
+            icon.style.color = "green";
+            // Revert back after 2 seconds
+            setTimeout(() => {
+                icon.classList.remove("fa-check");
+                icon.classList.add("fa-copy");
+                icon.style.color = "var(--secondary)";
+            }, 2000);
+        })
+        .catch(() => {
+            console.error("Failed to copy text");
+            alert("Failed to copy text");
+        });
+}
+
+// Download text file
+async function downloadGrammarText(button) {
+    const text = document.getElementById("grammarContainer").innerText;
+    if (!text.trim()) {
+        alert("Nothing to download!");
+        return;
+    }
+    try {
+        const response = await axios.post('http://localhost:3000/api/resume/download', { content: text }, { responseType: "blob" });
+        const blob = new Blob([response.data], { type: "text/plain" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "professional-summary.txt";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        const icon = button.querySelector("i");
+        icon.classList.replace("fa-download", "fa-check");
+        icon.style.color = "green";
+        setTimeout(() => {
+            icon.classList.replace("fa-check", "fa-download");
+            icon.style.color = "var(--secondary)";
+        }, 2000);
+    } catch (error) {
+        console.error(error);
+        alert("Download failed");
+    }
 }
 
 // Job Tracker

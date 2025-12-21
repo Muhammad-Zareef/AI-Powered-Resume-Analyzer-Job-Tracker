@@ -1,4 +1,5 @@
 
+const fs = require("fs");
 const path = require('path');
 const pdfjsLib = require("pdfjs-dist/legacy/build/pdf.js");
 const { response, json } = require('express');
@@ -105,13 +106,13 @@ const analyzeResume = async (req, res) => {
         });
         console.log(response.text);
         const aiData = safeJsonParse(response.text);
-        console.log(aiData)
+        console.log(aiData);
         const newResume = new Resume({
             userId: user.id,
             userName: user.name,
             userEmail: user.email,
             originalText: resumeText,
-            aiImprovedText: aiData.correctedVersion.replace(/\n{2,}/g, "</p><p>").replace(/\* /g, "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\|/g, " | "),
+            aiImprovedText: aiData.correctedVersion,
             aiScore: aiData.resumeScore,
             atsScore: aiData.atsScore,
             jobMatchPercentage: aiData.jobMatchPercentage,
@@ -124,6 +125,22 @@ const analyzeResume = async (req, res) => {
     } catch (err) {
         res.status(500).json({ status: 500, success: false, message: "Internal Server Error", });
     }
+}
+
+const downloadResume = async (req, res) => {
+    const { content } = req.body;
+
+    if (!content || !content.trim()) {
+        return res.status(400).json({ message: "No content provided" });
+    }
+
+    res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=professional-summary.txt"
+    );
+    res.setHeader("Content-Type", "text/plain");
+
+    res.send(content);
 }
 
 const deleteResume = async (req, res) => {
@@ -146,4 +163,4 @@ const clearAllHistory = async (req, res) => {
     }
 }
 
-module.exports = { getResumes, analyzeResume, deleteResume, clearAllHistory, auth };
+module.exports = { getResumes, analyzeResume, downloadResume, deleteResume, clearAllHistory, auth };
