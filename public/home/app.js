@@ -103,12 +103,13 @@ async function analyzeResume(e) {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
     try {
         const res = await axios.post('http://localhost:3000/api/resume/analyze', formData , { withCredentials: true });
-        setTimeout(() => {
+        console.log(res)
+        if (res.data.status == 200){
             displayResults(res.data.newResume);
             renderHistory();
             document.getElementById("analyzeBtn").disabled = false;
             document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
-        }, 5000);
+        }
     } catch (err) {
         document.getElementById("analyzeBtn").disabled = false;
         document.getElementById("analyzeBtn").innerHTML = '<i class="fas fa-magic mr-2"></i>Analyze Resume';
